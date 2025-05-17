@@ -19,6 +19,8 @@ public class Board {
 
     public Board(String filename) throws IOException {
         pieces = new ArrayList<>();
+        exitRow = -1;  // Initialize to -1 to indicate no exit found yet
+        exitCol = -1;
         readBoardFromFile(filename);
     }
 
@@ -51,18 +53,44 @@ public class Board {
         Map<Character, List<int[]>> pieceCells = new HashMap<>();
         for (int i = 0; i < rows; i++) {
             String line = reader.readLine().trim();
+            if (line.length() < cols) {
+                throw new IllegalArgumentException("Invalid row length at row " + (i + 3));
+            }
+            
+            // Handle special case for 'K' marker at end of line
+            boolean hasExtraKMarker = false;
+            if (line.length() > cols && line.charAt(cols) == 'K') {
+                hasExtraKMarker = true;
+                if (exitRow != -1 || exitCol != -1) {
+                    throw new IllegalArgumentException("Multiple exit points found");
+                }
+                exitRow = i;
+                exitCol = cols - 1;
+            }
+            
+            // Process the main grid
             for (int j = 0; j < cols; j++) {
                 char c = line.charAt(j);
                 grid[i][j] = c;
-                if (c == 'K') {
+                
+                // If we find 'K' in the grid itself, and it's not already marked by the extra 'K'
+                if (c == 'K' && !(hasExtraKMarker && j == cols - 1)) {
+                    if (exitRow != -1 || exitCol != -1) {
+                        throw new IllegalArgumentException("Multiple exit points found");
+                    }
                     exitRow = i;
                     exitCol = j;
-                } else if (c != '.') {
-                    pieceCells.computeIfAbsent(c, k -> new ArrayList<>()).add(new int[]{i, j});
+                } else if (c != '.' && c != 'K') {
+                    pieceCells.computeIfAbsent(c, k -> new ArrayList<>()).add(new int[] { i, j });
                 }
             }
         }
         reader.close();
+
+        // Make sure we found an exit
+        if (exitRow == -1 || exitCol == -1) {
+            throw new IllegalArgumentException("No exit point found");
+        }
 
         for (Map.Entry<Character, List<int[]>> entry : pieceCells.entrySet()) {
             char id = entry.getKey();
@@ -92,11 +120,12 @@ public class Board {
 
         int actualNonPrimary = pieces.size() - 1;
         if (actualNonPrimary != numNonPrimaryPieces) {
-            throw new IllegalArgumentException("Expected " + numNonPrimaryPieces + " non-primary pieces, found " + actualNonPrimary);
+            throw new IllegalArgumentException(
+                    "Expected " + numNonPrimaryPieces + " non-primary pieces, found " + actualNonPrimary);
         }
 
         if (primaryPiece.isHorizontal() && exitRow != primaryPiece.getRow() ||
-            !primaryPiece.isHorizontal() && exitCol != primaryPiece.getCol()) {
+                !primaryPiece.isHorizontal() && exitCol != primaryPiece.getCol()) {
             throw new IllegalArgumentException("Exit not aligned with primary piece orientation");
         }
     }
