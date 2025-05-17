@@ -1,0 +1,22 @@
+# === Java ===
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# === Compile output ===
+bin/
+out/
+
+# === JavaFX SDK binaries ===
+lib/
+*.dylib
+*.so
+*.dll
+
+# === macOS files ===
+.DS_Store
+
+# === VS Code ===
+.vscode/
