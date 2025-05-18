@@ -51,47 +51,91 @@ public class Board {
         int numNonPrimaryPieces = Integer.parseInt(reader.readLine().trim());
 
         Map<Character, List<int[]>> pieceCells = new HashMap<>();
-        for (int i = 0; i < rows; i++) {
-            String line = reader.readLine().trim();
-            if (line.length() < cols) {
-                throw new IllegalArgumentException("Invalid row length at row " + (i + 3));
-            }
-            
-            // Handle special case for 'K' marker at end of line
-            boolean hasExtraKMarker = false;
-            if (line.length() > cols && line.charAt(cols) == 'K') {
-                hasExtraKMarker = true;
-                if (exitRow != -1 || exitCol != -1) {
-                    throw new IllegalArgumentException("Multiple exit points found");
-                }
-                exitRow = i;
-                exitCol = cols - 1;
-            }
-            
-            // Process the main grid
-            for (int j = 0; j < cols; j++) {
-                char c = line.charAt(j);
-                grid[i][j] = c;
-                
-                // If we find 'K' in the grid itself, and it's not already marked by the extra 'K'
-                if (c == 'K' && !(hasExtraKMarker && j == cols - 1)) {
-                    if (exitRow != -1 || exitCol != -1) {
-                        throw new IllegalArgumentException("Multiple exit points found");
-                    }
-                    exitRow = i;
-                    exitCol = j;
-                } else if (c != '.' && c != 'K') {
-                    pieceCells.computeIfAbsent(c, k -> new ArrayList<>()).add(new int[] { i, j });
+        
+        // Variabel untuk menghitung jumlah K
+        int kCount = 0;
+        
+        // Baca seluruh file untuk menghitung jumlah K
+        List<String> allLines = new ArrayList<>();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            allLines.add(line);
+            for (int i = 0; i < line.length(); i++) {
+                if (line.charAt(i) == 'K') {
+                    kCount++;
                 }
             }
         }
+        
+        // Cek jumlah K (pintu keluar)
+        if (kCount == 0) {
+            throw new IllegalArgumentException("No exit point found");
+        } else if (kCount > 1) {
+            System.out.println("Debug: Found " + kCount + " exit points ('K'). Only one exit is allowed.");
+            throw new IllegalArgumentException("Multiple exit points found");
+        }
+        
+        // Lanjutkan dengan membaca grid dan memproses pieces
+        // Reset reader untuk membaca dari awal
         reader.close();
-
-        // Make sure we found an exit
+        reader = new BufferedReader(new FileReader(filename));
+        
+        // Skip baris dimensi dan jumlah non-primary pieces
+        reader.readLine();
+        reader.readLine();
+        
+        // Baca baris-baris grid
+        for (int i = 0; i < rows; i++) {
+            line = i < allLines.size() ? allLines.get(i) : "";
+            line = line.trim();
+            
+            // Validasi panjang baris
+            if (line.length() < cols) {
+                throw new IllegalArgumentException("Line too short at row " + i);
+            }
+            
+            // Periksa apakah pintu keluar ada di baris ini (tepat di luar grid)
+            if (line.length() > cols && line.charAt(cols) == 'K') {
+                exitRow = i;
+                exitCol = cols; // Pintu keluar di kanan grid
+                System.out.println("Debug: Found exit at row " + exitRow + ", col " + exitCol + " (outside right grid)");
+            }
+            
+            // Proses grid utama
+            for (int j = 0; j < cols; j++) {
+                char c = j < line.length() ? line.charAt(j) : '.';
+                if (c == 'K') {
+                    // Jika 'K' ada di dalam grid
+                    exitRow = i;
+                    exitCol = j;
+                    grid[i][j] = '.'; // Kosongkan sel
+                    System.out.println("Debug: Found exit at row " + exitRow + ", col " + exitCol + " (inside grid)");
+                } else {
+                    grid[i][j] = c;
+                    if (c != '.') {
+                        pieceCells.computeIfAbsent(c, k -> new ArrayList<>()).add(new int[] { i, j });
+                    }
+                }
+            }
+        }
+        
+        // Periksa baris tambahan (jika ada)
+        if (rows < allLines.size()) {
+            line = allLines.get(rows);
+            int kIndex = line.indexOf('K');
+            if (kIndex != -1) {
+                exitRow = rows; // Pintu keluar di bawah grid
+                exitCol = kIndex;
+                System.out.println("Debug: Found exit at row " + exitRow + ", col " + exitCol + " (below grid)");
+            }
+        }
+        
+        // Pastikan pintu keluar ditemukan (sudah divalidasi sebelumnya dengan kCount)
         if (exitRow == -1 || exitCol == -1) {
             throw new IllegalArgumentException("No exit point found");
         }
 
+        // Proses dan validasi pieces
         for (Map.Entry<Character, List<int[]>> entry : pieceCells.entrySet()) {
             char id = entry.getKey();
             List<int[]> cells = entry.getValue();
@@ -124,9 +168,26 @@ public class Board {
                     "Expected " + numNonPrimaryPieces + " non-primary pieces, found " + actualNonPrimary);
         }
 
-        if (primaryPiece.isHorizontal() && exitRow != primaryPiece.getRow() ||
-                !primaryPiece.isHorizontal() && exitCol != primaryPiece.getCol()) {
-            throw new IllegalArgumentException("Exit not aligned with primary piece orientation");
+        // Debug primary piece dan pintu keluar
+        System.out.println("Debug: Primary piece at col " + primaryPiece.getCol() + ", row " + primaryPiece.getRow() + 
+                        ", isHorizontal: " + primaryPiece.isHorizontal());
+        System.out.println("Debug: Exit at col " + exitCol + ", row " + exitRow);
+
+        // Validasi alignment pintu keluar dengan mobil utama
+        if (primaryPiece.isHorizontal()) {
+            // Untuk mobil horizontal, pintu keluar harus berada di baris yang sama
+            if (exitRow != primaryPiece.getRow()) {
+                System.out.println("Debug: Exit and primary piece not aligned horizontally");
+                System.out.println("Debug: Exit row: " + exitRow + ", Primary piece row: " + primaryPiece.getRow());
+                throw new IllegalArgumentException("Exit not aligned with horizontal primary piece");
+            }
+        } else {
+            // Untuk mobil vertikal, pintu keluar harus berada di kolom yang sama
+            if (exitCol != primaryPiece.getCol()) {
+                System.out.println("Debug: Exit and primary piece not aligned vertically");
+                System.out.println("Debug: Exit col: " + exitCol + ", Primary piece col: " + primaryPiece.getCol());
+                throw new IllegalArgumentException("Exit not aligned with vertical primary piece");
+            }
         }
     }
 
@@ -159,12 +220,25 @@ public class Board {
 
     public boolean isSolved() {
         if (primaryPiece.isHorizontal()) {
-            int exitColForPiece = primaryPiece.getCol() + primaryPiece.getSize() - 1;
-            return primaryPiece.getRow() == exitRow && exitColForPiece == exitCol;
+            if (exitCol == cols) {
+                // Pintu keluar di kanan grid
+                return primaryPiece.getRow() == exitRow && primaryPiece.getCol() + primaryPiece.getSize() - 1 == cols - 1;
+            } else if (exitCol < cols) {
+                // Pintu keluar di dalam grid
+                return primaryPiece.getRow() == exitRow &&
+                    Math.abs(primaryPiece.getCol() + primaryPiece.getSize() - 1 - exitCol) <= 1;
+            }
         } else {
-            int exitRowForPiece = primaryPiece.getRow() + primaryPiece.getSize() - 1;
-            return primaryPiece.getCol() == exitCol && exitRowForPiece == exitRow;
+            if (exitRow == rows) {
+                // Pintu keluar di bawah grid
+                return primaryPiece.getCol() == exitCol && primaryPiece.getRow() + primaryPiece.getSize() - 1 == rows - 1;
+            } else if (exitRow < rows) {
+                // Pintu keluar di dalam grid
+                return primaryPiece.getCol() == exitCol &&
+                    Math.abs(primaryPiece.getRow() + primaryPiece.getSize() - 1 - exitRow) <= 1;
+            }
         }
+        return false;
     }
 
     public List<Move> getAllPossibleMoves() {
@@ -204,14 +278,19 @@ public class Board {
         for (int i = 0; i < rows; i++) {
             System.arraycopy(grid[i], 0, newGrid[i], 0, cols);
         }
+        
+        // Kosongkan sel-sel yang sebelumnya ditempati oleh piece yang digerakkan
         for (int[] cell : oldPiece.getOccupiedCells()) {
-            newGrid[cell[0]][cell[1]] = '.';
+            if (cell[0] >= 0 && cell[0] < rows && cell[1] >= 0 && cell[1] < cols) {
+                newGrid[cell[0]][cell[1]] = '.';
+            }
         }
+        
+        // Tempati sel-sel baru dengan piece yang digerakkan
         for (int[] cell : newPiece.getOccupiedCells()) {
-            newGrid[cell[0]][cell[1]] = newPiece.getId();
-        }
-        if (exitRow >= 0 && exitCol >= 0) {
-            newGrid[exitRow][exitCol] = 'K';
+            if (cell[0] >= 0 && cell[0] < rows && cell[1] >= 0 && cell[1] < cols) {
+                newGrid[cell[0]][cell[1]] = newPiece.getId();
+            }
         }
 
         Piece newPrimaryPiece = primaryPiece.getId() == pieceId ? newPiece : primaryPiece;
@@ -221,21 +300,36 @@ public class Board {
     public void printBoard(Move move) {
         char movedPieceId = move != null ? move.getPieceId() : 0;
         System.out.println("Papan:");
+        
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 char c = grid[i][j];
                 if (c == 'P') {
                     System.out.print("\u001B[31m" + c + "\u001B[0m ");
-                } else if (c == 'K') {
-                    System.out.print("\u001B[32m" + c + "\u001B[0m ");
                 } else if (c == movedPieceId && c != '.') {
                     System.out.print("\u001B[34m" + c + "\u001B[0m ");
                 } else {
                     System.out.print(c + " ");
                 }
             }
+            
+            // Tampilkan pintu keluar jika berada di baris ini dan tepat di luar grid
+            if (i == exitRow && exitCol == cols) {
+                System.out.print("\u001B[32mK\u001B[0m");
+            }
+            
             System.out.println();
         }
+        
+        // Tampilkan pintu keluar jika berada di bawah grid
+        if (exitRow == rows) {
+            for (int j = 0; j < exitCol; j++) {
+                System.out.print("  "); // Dua spasi untuk setiap kolom sebelum 'K'
+            }
+            System.out.print("\u001B[32mK\u001B[0m");
+            System.out.println();
+        }
+        
         System.out.println();
     }
 
