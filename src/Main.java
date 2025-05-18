@@ -4,6 +4,7 @@ import core.Board;
 import core.GameState;
 import core.Move;
 import core.Piece;
+import algorithm.AStar;
 
 public class Main {
     public static void main(String[] args) {
@@ -57,9 +58,70 @@ public class Main {
                 successor.getBoard().printBoard(move);
                 System.out.println("Successor Heuristic (h): " + successor.getH());
             }
+            
+            // Test 5: A* Algorithm Testing
+            System.out.println("\n=== Test 5: A* Algorithm Testing ===");
+            testAStar(board);
 
         } catch (IOException e) {
             System.out.println("Error loading board: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Test the A* algorithm with different heuristics
+     */
+    private static void testAStar(Board board) {
+        String[] heuristics = {"manhattan", "blocking", "combined"};
+        
+        // Test A* with different heuristics
+        for (String heuristic : heuristics) {
+            System.out.println("\n----- A* with " + heuristic + " heuristic -----");
+            AStar astar = new AStar(heuristic);
+            GameState astarSolution = astar.solve(board);
+            System.out.println("Solution found: " + (astarSolution != null));
+            if (astarSolution != null) {
+                System.out.println("Solution steps: " + astarSolution.getMoves().size());
+                System.out.println("Nodes visited: " + astar.getNodesVisited());
+                System.out.println("Execution time: " + astar.getExecutionTime());
+                
+                System.out.println("\nSolution path:");
+                astar.printSolution(astarSolution);
+            }
+        }
+        
+        // Print comparative summary for A*
+        System.out.println("\n----- A* Comparison Summary -----");
+        System.out.println("Heuristic\tSolution Steps\tNodes Visited\tExecution Time");
+        
+        for (String heuristic : heuristics) {
+            AStar astar = new AStar(heuristic);
+            GameState astarSolution = astar.solve(board);
+            if (astarSolution != null) {
+                System.out.println(heuristic + "\t\t" + astarSolution.getMoves().size() + "\t\t" + 
+                                 astar.getNodesVisited() + "\t\t" + astar.getExecutionTime());
+            } else {
+                System.out.println(heuristic + "\t\tNo solution\t" + 
+                                 astar.getNodesVisited() + "\t\t" + astar.getExecutionTime());
+            }
+        }
+    }
+    
+    /**
+     * Test with a different puzzle
+     */
+    private static void testWithAnotherPuzzle() {
+        try {
+            System.out.println("\n=== Testing with Another Puzzle ===");
+            Board board = new Board("test/test2.txt");  // Make sure this file exists
+            System.out.println("Initial Board:");
+            board.printBoard(null);
+            
+            testAStar(board);
+            
+        } catch (IOException e) {
+            System.out.println("Error loading second puzzle: " + e.getMessage());
         }
     }
 }
