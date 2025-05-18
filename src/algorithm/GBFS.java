@@ -1,5 +1,5 @@
 package algorithm;
 
-public class Greedy {
+public class GBFS {
     
 }
