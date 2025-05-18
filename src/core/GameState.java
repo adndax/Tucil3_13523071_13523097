@@ -3,45 +3,65 @@ package core;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import utils.Heuristics;
 
 public class GameState {
     private final Board board;
     private final List<Move> moves;
     private final double g; // Path cost (number of moves)
-    private final double h; // Heuristic value (Manhattan distance)
+    private final double h; // Heuristic value
     private final double f; // Total cost (g + h for A*)
+    private final String heuristicName; // Name of the heuristic being used
 
-    // Constructor for initial state
+    // Constructor for initial state with default heuristic
     public GameState(Board board) {
+        this(board, "manhattan");
+    }
+
+    // Constructor for initial state with specified heuristic
+    public GameState(Board board, String heuristicName) {
         this.board = board;
         this.moves = new ArrayList<>();
         this.g = 0;
+        this.heuristicName = heuristicName;
         this.h = computeHeuristic();
         this.f = g + h;
     }
 
-    // Constructor for successor state
+    // Constructor for successor state with default heuristic
     public GameState(Board board, List<Move> parentMoves, Move newMove, double parentG) {
+        this(board, parentMoves, newMove, parentG, "manhattan");
+    }
+
+    // Constructor for successor state with specified heuristic
+    public GameState(Board board, List<Move> parentMoves, Move newMove, double parentG, String heuristicName) {
         this.board = board;
         this.moves = new ArrayList<>(parentMoves);
         this.moves.add(newMove);
         this.g = parentG + 1;
+        this.heuristicName = heuristicName;
         this.h = computeHeuristic();
         this.f = g + h;
     }
 
-    // Compute Manhattan distance heuristic
+    // Compute heuristic based on the selected heuristic name
     private double computeHeuristic() {
-        Piece primary = board.getPrimaryPiece();
-        int exitRow = board.getExitRow();
-        int exitCol = board.getExitCol();
+        if (heuristicName == null || heuristicName.equals("manhattan")) {
+            // Use the original implementation for backward compatibility
+            Piece primary = board.getPrimaryPiece();
+            int exitRow = board.getExitRow();
+            int exitCol = board.getExitCol();
 
-        if (primary.isHorizontal()) {
-            int pieceEndCol = primary.getCol() + primary.getSize() - 1;
-            return Math.abs(pieceEndCol - exitCol);
+            if (primary.isHorizontal()) {
+                int pieceEndCol = primary.getCol() + primary.getSize() - 1;
+                return Math.abs(pieceEndCol - exitCol);
+            } else {
+                int pieceEndRow = primary.getRow() + primary.getSize() - 1;
+                return Math.abs(pieceEndRow - exitRow);
+            }
         } else {
-            int pieceEndRow = primary.getRow() + primary.getSize() - 1;
-            return Math.abs(pieceEndRow - exitRow);
+            // Use the Heuristics utility class for other heuristics
+            return Heuristics.getHeuristic(board, heuristicName);
         }
     }
 
@@ -50,7 +70,7 @@ public class GameState {
         List<GameState> successors = new ArrayList<>();
         for (Move move : board.getAllPossibleMoves()) {
             Board newBoard = board.applyMove(move);
-            GameState successor = new GameState(newBoard, moves, move, g);
+            GameState successor = new GameState(newBoard, moves, move, g, heuristicName);
             successors.add(successor);
         }
         return successors;
@@ -75,6 +95,10 @@ public class GameState {
 
     public double getF() {
         return f;
+    }
+    
+    public String getHeuristicName() {
+        return heuristicName;
     }
 
     public boolean isGoal() {
