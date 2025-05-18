@@ -222,20 +222,26 @@ public class Board {
         if (primaryPiece.isHorizontal()) {
             if (exitCol == cols) {
                 // Pintu keluar di kanan grid
-                return primaryPiece.getRow() == exitRow && primaryPiece.getCol() + primaryPiece.getSize() - 1 == cols - 1;
+                // Pastikan primary piece berada tepat di samping exit point
+                return primaryPiece.getRow() == exitRow && 
+                    primaryPiece.getCol() + primaryPiece.getSize() == cols;
             } else if (exitCol < cols) {
                 // Pintu keluar di dalam grid
+                // Pastikan primary piece berada tepat di atas exit point
                 return primaryPiece.getRow() == exitRow &&
-                    Math.abs(primaryPiece.getCol() + primaryPiece.getSize() - 1 - exitCol) <= 1;
+                    primaryPiece.getCol() + primaryPiece.getSize() == exitCol + 1;
             }
         } else {
             if (exitRow == rows) {
                 // Pintu keluar di bawah grid
-                return primaryPiece.getCol() == exitCol && primaryPiece.getRow() + primaryPiece.getSize() - 1 == rows - 1;
+                // Pastikan primary piece berada tepat di atas exit point
+                return primaryPiece.getCol() == exitCol && 
+                    primaryPiece.getRow() + primaryPiece.getSize() == rows;
             } else if (exitRow < rows) {
                 // Pintu keluar di dalam grid
+                // Pastikan primary piece berada tepat di atas exit point
                 return primaryPiece.getCol() == exitCol &&
-                    Math.abs(primaryPiece.getRow() + primaryPiece.getSize() - 1 - exitRow) <= 1;
+                    primaryPiece.getRow() + primaryPiece.getSize() == exitRow + 1;
             }
         }
         return false;

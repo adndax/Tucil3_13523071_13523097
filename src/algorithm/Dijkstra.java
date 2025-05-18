@@ -147,9 +147,6 @@ public class Dijkstra {
         return key.toString();
     }
     
-    /**
-     * Prints the solution path
-     */
     public void printSolution(GameState solution) {
         if (solution == null) {
             System.out.println("No solution found!");
@@ -169,6 +166,11 @@ public class Dijkstra {
             currentBoard = currentBoard.applyMove(move);
             System.out.println("Gerakan " + (i + 1) + ": " + move);
             currentBoard.printBoard(move);
+        }
+        
+        // Verifikasi solusi
+        if (!currentBoard.isSolved()) {
+            System.out.println("Warning: Solusi mungkin belum lengkap. Primary piece belum mencapai exit point.");
         }
         
         System.out.println("Solusi ditemukan dalam " + moves.size() + " langkah");
