@@ -47,8 +47,9 @@ public class ControlPanel extends VBox {
         algoLabel.getStyleClass().add("control-label");
         
         algorithmChoiceBox = new ComboBox<>();
-        algorithmChoiceBox.getItems().addAll("A*", "Greedy Best First Search", "UCS");
-        algorithmChoiceBox.setValue("A*");
+        // Perbarui daftar algoritma yang tersedia dengan tampilan formal
+        algorithmChoiceBox.getItems().addAll("A*", "Dijkstra", "Greedy Best-First Search", "Uniform Cost Search");
+        algorithmChoiceBox.setValue("A*");  // Default tampilan formal
         algorithmChoiceBox.setMaxWidth(Double.MAX_VALUE);
         algorithmChoiceBox.getStyleClass().add("control-combo-box");
         
@@ -56,10 +57,37 @@ public class ControlPanel extends VBox {
         heuristicLabel.getStyleClass().add("control-label");
         
         heuristicChoiceBox = new ComboBox<>();
-        heuristicChoiceBox.getItems().addAll("Heuristic 1", "Heuristic 2", "Heuristic 3");
-        heuristicChoiceBox.setValue("Heuristic 1");
+        // Perbarui daftar heuristic yang tersedia dengan tampilan formal
+        heuristicChoiceBox.getItems().addAll("None", "Manhattan Distance", "Blocking Heuristic", "Combined Heuristic");
+        heuristicChoiceBox.setValue("None");  // Default ke None sesuai permintaan
         heuristicChoiceBox.setMaxWidth(Double.MAX_VALUE);
         heuristicChoiceBox.getStyleClass().add("control-combo-box");
+
+        // Aktifkan/nonaktifkan heuristic berdasarkan algoritma yang dipilih
+        algorithmChoiceBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            boolean needsHeuristic = !getInternalName(newVal).equals("ucs") && 
+                                    !getInternalName(newVal).equals("dijkstra");
+            
+            if (!needsHeuristic) {
+                // Jika algoritma tidak memerlukan heuristik, set ke None dan disable
+                heuristicChoiceBox.setValue("None");
+                heuristicChoiceBox.setDisable(true);
+            } else {
+                // Jika algoritma memerlukan heuristik, enable dan set default jika masih None
+                heuristicChoiceBox.setDisable(false);
+                
+                // Jika nilai sebelumnya adalah None dan algoritma memerlukan heuristik,
+                // set ke Manhattan Distance secara default
+                if (heuristicChoiceBox.getValue().equals("None")) {
+                    heuristicChoiceBox.setValue("Manhattan Distance");
+                }
+            }
+        });
+        
+        // Trigger listener initialization untuk set state awal
+        algorithmChoiceBox.fireEvent(
+            new javafx.event.ActionEvent(algorithmChoiceBox, null)
+        );
         
         solveButton = new Button("Solve Puzzle");
         solveButton.getStyleClass().add("start-button");
@@ -153,11 +181,24 @@ public class ControlPanel extends VBox {
             solveButton.setDisable(false);
         }
     }
-    
     private void solvePuzzle() {
-        String algorithm = algorithmChoiceBox.getValue();
-        String heuristic = heuristicChoiceBox.getValue();
+        String algorithmFormal = algorithmChoiceBox.getValue();
+        String heuristicFormal = heuristicChoiceBox.getValue();
         
+        String algorithm = getInternalName(algorithmFormal);
+        String heuristic = getInternalName(heuristicFormal);
+        
+        // PENTING: Hanya kirim heuristik jika bukan "none" dan algoritma membutuhkannya
+        if ("none".equals(heuristic) || 
+            "dijkstra".equals(algorithm) || 
+            "ucs".equals(algorithm)) {
+            heuristic = null;
+        }
+        
+        System.out.println("Solving puzzle with algorithm: " + algorithm + 
+                        ", heuristic: " + (heuristic != null ? heuristic : "N/A"));
+        
+        // Panggil renderer dengan parameter yang benar
         boolean solved = renderer.solvePuzzle(algorithm, heuristic);
         
         if (solved) {
@@ -172,13 +213,23 @@ public class ControlPanel extends VBox {
             );
             
             createStateButtons();
+        } else {
+            // Tampilkan detail error dalam alert
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Solving Result");
+            alert.setHeaderText("No Solution Found");
+            alert.setContentText("The puzzle could not be solved with " + 
+                                algorithmFormal + 
+                                (heuristic != null ? " and " + heuristicFormal : "") + 
+                                ". Check console for details.");
+            alert.showAndWait();
         }
     }
-    
+
     private void createStateButtons() {
         stateButtonsPane.getChildren().clear();
         
-        int totalStates = renderer.getTotalMoves() + 1;
+        int totalStates = renderer.getTotalSteps();
         
         for (int i = 0; i < totalStates; i++) {
             Button stateButton = new Button("S" + i);
@@ -218,5 +269,19 @@ public class ControlPanel extends VBox {
             "Total Moves: %d\nNodes Visited: %d\nExecution Time: %d ms",
             moves, nodes, executionTime
         ));
+    }
+
+    private String getInternalName(String displayName) {
+        switch(displayName) {
+            case "A*": return "astar";
+            case "Dijkstra": return "dijkstra";
+            case "Greedy Best-First Search": return "gbfs";
+            case "Uniform Cost Search": return "ucs";
+            case "Manhattan Distance": return "manhattan";
+            case "Blocking Heuristic": return "blocking";
+            case "Combined Heuristic": return "combined";
+            case "None": return "none";
+            default: return displayName.toLowerCase();
+        }
     }
 }
