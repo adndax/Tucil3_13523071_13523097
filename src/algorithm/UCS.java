@@ -71,7 +71,7 @@ public class UCS {
 
     public void printSolution(GameState solution) {
         if (solution == null) {
-            System.out.println("No solution to print.");
+            System.out.println("Tidak ada solusi yang ditemukan!");
             return;
         }
 
