@@ -21,6 +21,7 @@ public class UCS {
 
     private int nodesVisited;
     private double executionTime;
+
     private Board initialBoard; // Store the initial board
 
     public UCS() {
@@ -88,6 +89,7 @@ public class UCS {
 
         // Print initial board
         System.out.println("Papan Awal:");
+
         initialBoard.printBoard(null);
 
         // Print each move and resulting board

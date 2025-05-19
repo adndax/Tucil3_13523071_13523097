@@ -129,11 +129,11 @@ public class AStar {
      */
     public void printSolution(GameState solution) {
         if (solution == null) {
-            System.out.println("No solution found!");
+            System.out.println("Tidak ada solusi yang ditemukan!");
             return;
         }
         
-        System.out.println("Using heuristic: " + heuristicName);
+        System.out.println("Menggunakan heuristic: " + heuristicName);
         
         List<Move> moves = solution.getMoves();
         
