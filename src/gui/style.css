@@ -364,16 +364,6 @@
     -fx-min-width: 120px;
 }
 
-.state-buttons-pane {
-    -fx-background-color: #fff9e8;
-    -fx-background-radius: 5;
-    -fx-border-color: #d1c5b5;
-    -fx-border-width: 1px;
-    -fx-border-radius: 5;
-    -fx-padding: 8px;
-    -fx-min-height: 80px;
-}
-
 .state-button {
     -fx-background-color: #acd7d5;
     -fx-text-fill: #725861;
@@ -428,40 +418,30 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 7, 0, 0, 2);
 }
 
-.piece-A { -fx-fill: #FAD390; }
-.piece-B { -fx-fill: #F8C291; }
-.piece-C { -fx-fill: #6A89CC; }
-.piece-D { -fx-fill: #82CCDD; }
-.piece-E { -fx-fill: #B8E994; }
-.piece-F { -fx-fill: #F6B93B; }
-.piece-G { -fx-fill: #78E08F; }
-.piece-H { -fx-fill: #E55039; }
-.piece-I { -fx-fill: #fa8231; }
-.piece-J { -fx-fill: #f7b731; }
-.piece-L { -fx-fill: #BDC581; }
-.piece-M { -fx-fill: #A3CB38; }
-.piece-N { -fx-fill: #009432; }
-.piece-O { -fx-fill: #006266; }
-.piece-Q { -fx-fill: #1B9CFC; }
-.piece-R { -fx-fill: #5f27cd; }
-.piece-S { -fx-fill: #8854d0; }
-.piece-T { -fx-fill: #D6A2E8; }
-.piece-U { -fx-fill: #EAB543; }
-.piece-V { -fx-fill: #ff9ff3; }
-.piece-W { -fx-fill: #ff6b6b; }
-.piece-X { -fx-fill: #48dbfb; }
-.piece-Y { -fx-fill: #01a3a4; }
-.piece-Z { -fx-fill: #2ecc71; }
-
-.state-buttons-pane {
-    -fx-background-color: #fff9e8;
-    -fx-background-radius: 5;
-    -fx-border-color: #d1c5b5;
-    -fx-border-width: 1px;
-    -fx-border-radius: 5;
-    -fx-padding: 8px;
-    -fx-min-height: 80px;
-}
+.piece-A { -fx-fill: #FFDDC1; } /* Peach muda */
+.piece-B { -fx-fill: #A8D0E6; } /* Sky pastel */
+.piece-C { -fx-fill: #F6A6B2; } /* Rose pastel */
+.piece-D { -fx-fill: #C2F784; } /* Lime pastel */
+.piece-E { -fx-fill: #B5EAD7; } /* Mint muda */
+.piece-F { -fx-fill: #FFB5E8; } /* Pink candy */
+.piece-G { -fx-fill: #C1C8E4; } /* Lavender blue */
+.piece-H { -fx-fill: #FDCB9E; } /* Orange cream */
+.piece-I { -fx-fill: #D5AAFF; } /* Soft purple */
+.piece-J { -fx-fill: #FFF1BD; } /* Lemon sherbet */
+.piece-L { -fx-fill: #A0E7E5; } /* Teal pastel */
+.piece-M { -fx-fill: #FFCBCB; } /* Pastel red blush */
+.piece-N { -fx-fill: #B8B8FF; } /* Soft indigo */
+.piece-O { -fx-fill: #F7DAD9; } /* Very pale coral */
+.piece-Q { -fx-fill: #AFCBFF; } /* Bluebell pastel */
+.piece-R { -fx-fill: #E6E6FA; } /* Lavender */
+.piece-S { -fx-fill: #E2F0CB; } /* Avocado soft */
+.piece-T { -fx-fill: #FDC5F5; } /* Light pink-violet */
+.piece-U { -fx-fill: #B6E2D3; } /* Light seafoam */
+.piece-V { -fx-fill: #FFDAC1; } /* Light apricot */
+.piece-W { -fx-fill: #C9F4AA; } /* Chartreuse pastel */
+.piece-X { -fx-fill: #DAD4EF; } /* Mauve pastel */
+.piece-Y { -fx-fill: #E7FFAC; } /* Banana milk */
+.piece-Z { -fx-fill: #ADD8E6; };
 
 .state-button {
     -fx-background-color: #acd7d5;
@@ -484,31 +464,42 @@
     -fx-font-weight: bold;
 }
 
+/* Perbaikan untuk area Board States */
+.state-buttons-pane {
+    -fx-background-color: #fff9e8;
+    -fx-background-radius: 5;
+    -fx-border-color: #d1c5b5;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5;
+    -fx-padding: 8px;
+    -fx-min-height: 100px;
+}
+
 .control-scroll-pane {
     -fx-background-color: transparent;
+    -fx-background: transparent;
     -fx-border-color: transparent;
     -fx-padding: 0;
 }
 
 .control-scroll-pane > .viewport {
+    -fx-background-color: transparent; /* Mengubah dari transparent ke kuning */
+    -fx-background: transparent;
+}
+
+/* Perbaikan untuk content area dalam ScrollPane */
+.control-scroll-pane .scroll-bar:vertical .track,
+.control-scroll-pane .scroll-bar:horizontal .track {
+    -fx-background-color: transparent; /* Mengubah dari #f0e6d2 ke kuning */
+}
+
+/* Atur background parent container */
+.control-panel .scroll-pane {
     -fx-background-color: transparent;
 }
 
-.control-scroll-pane .scroll-bar:vertical {
+/* Pastikan semua container parent tidak memiliki warna abu-abu */
+.board-states-container {
     -fx-background-color: transparent;
-    -fx-pref-width: 10;
-}
-
-.control-scroll-pane .scroll-bar:vertical .thumb {
-    -fx-background-color: #acd7d5;
-    -fx-background-radius: 5;
-}
-
-.control-scroll-pane .scroll-bar:vertical .track {
-    -fx-background-color: #f0e6d2;
-    -fx-background-radius: 5;
-}
-
-.control-panel {
-    -fx-padding: 20 20 30 20; 
+    -fx-background: transparent;
 }

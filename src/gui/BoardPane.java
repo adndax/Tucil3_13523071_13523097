@@ -16,7 +16,6 @@ import java.util.Map;
 
 public class BoardPane extends GridPane {
     
-    // TODO: pintu keluar masih salah HUAAAA gamuncul
     private int rows = 6;
     private int cols = 6;
     private double cellSize = 60;
@@ -267,10 +266,6 @@ public class BoardPane extends GridPane {
         }
         
         transition.play();
-    }
-    
-    public void movePiece(Character piece, String direction, int steps) {
-        movePiece((char)piece, direction, steps);
     }
     
     public void updateBoard(char[][] newBoard) {
