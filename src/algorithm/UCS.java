@@ -22,13 +22,22 @@ public class UCS {
     private int nodesVisited;
     private double executionTime;
 
+    private Board initialBoard; // Store the initial board
+
+    public UCS() {
+        this.nodesVisited = 0;
+        this.executionTime = 0.0;
+    }
+
     public GameState solve(Board board) {
+        this.initialBoard = board; // Store the initial board for solution printing
+        
         // Initialize priority queue with cost as priority
         PriorityQueue<Node> openList = new PriorityQueue<>(Comparator.comparingDouble(n -> n.cost));
         Set<GameState> closedList = new HashSet<>();
 
-        // Create initial state
-        GameState initialState = new GameState(board);
+        // Create initial state with no heuristic (UCS doesn't use heuristics)
+        GameState initialState = new GameState(board, "none"); // Use the "none" heuristic
         Node initialNode = new Node(initialState, 0, null);
         openList.add(initialNode);
 
@@ -44,7 +53,7 @@ public class UCS {
             // Check if goal state is reached
             if (currentState.isGoal()) {
                 executionTime = (System.nanoTime() - startTime) / 1_000_000.0; // Convert to milliseconds
-                return currentState;
+                return currentState; // No need to reconstruct the path, it's already in the GameState
             }
 
             // Skip if state has been visited
@@ -58,7 +67,8 @@ public class UCS {
             // Generate successors
             for (GameState successor : currentState.getSuccessors()) {
                 if (!closedList.contains(successor)) {
-                    Node successorNode = new Node(successor, currentNode.cost + 1, currentNode);
+                    // Use the cost from the successor's g value (path cost)
+                    Node successorNode = new Node(successor, successor.getG(), currentNode);
                     openList.add(successorNode);
                 }
             }
@@ -75,14 +85,15 @@ public class UCS {
             return;
         }
 
-        Board currentBoard = solution.getBoard();
         List<Move> moves = solution.getMoves();
 
         // Print initial board
         System.out.println("Papan Awal:");
-        currentBoard.printBoard(null);
+
+        initialBoard.printBoard(null);
 
         // Print each move and resulting board
+        Board currentBoard = initialBoard;
         for (int i = 0; i < moves.size(); i++) {
             Move move = moves.get(i);
             currentBoard = currentBoard.applyMove(move);
