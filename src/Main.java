@@ -5,6 +5,8 @@ import core.Board;
 import core.GameState;
 import algorithm.AStar;
 import algorithm.Dijkstra;
+import algorithm.GBFS;
+import algorithm.UCS;
 
 public class Main {
     private static final String[] VALID_ALGORITHMS = {"astar", "dijkstra", "gbfs", "ucs"};
@@ -170,43 +172,43 @@ public class Main {
                 }
                 break;
 
-            // case "gbfs":
-            //     GBFS gbfs = new GBFS(heuristic);
-            //     solution = gbfs.solve(board);
+            case "gbfs":
+                GBFS gbfs = new GBFS(heuristic);
+                solution = gbfs.solve(board);
                 
-            //     if (solution != null) {
-            //         System.out.println("Solution found with " + solution.getMoves().size() + " steps");
-            //         System.out.println("Nodes visited: " + gbfs.getNodesVisited());
-            //         System.out.println("Execution time: " + gbfs.getExecutionTime());
-            //         System.out.println("\nSolution path:");
-            //         gbfs.printSolution(solution);
-            //     } else {
-            //         System.out.println("No solution found!");
-            //         System.out.println("Nodes visited: " + gbfs.getNodesVisited());
-            //         System.out.println("Execution time: " + gbfs.getExecutionTime());
-            //     }
-            //     break;
+                if (solution != null) {
+                    System.out.println("Solution found with " + solution.getMoves().size() + " steps");
+                    System.out.println("Nodes visited: " + gbfs.getNodesVisited());
+                    System.out.println("Execution time: " + gbfs.getExecutionTime());
+                    System.out.println("\nSolution path:");
+                    gbfs.printSolution(solution);
+                } else {
+                    System.out.println("No solution found!");
+                    System.out.println("Nodes visited: " + gbfs.getNodesVisited());
+                    System.out.println("Execution time: " + gbfs.getExecutionTime());
+                }
+                break;
                 
-            // case "ucs":
-            //     UCS ucs = new UCS();
-            //     solution = ucs.solve(board);
+            case "ucs":
+                UCS ucs = new UCS();
+                solution = ucs.solve(board);
                 
-            //     if (solution != null) {
-            //         System.out.println("Solution found with " + solution.getMoves().size() + " steps");
-            //         System.out.println("Nodes visited: " + ucs.getNodesVisited());
-            //         System.out.println("Execution time: " + ucs.getExecutionTime());
-            //         System.out.println("\nSolution path:");
-            //         ucs.printSolution(solution);
-            //     } else {
-            //         System.out.println("No solution found!");
-            //         System.out.println("Nodes visited: " + ucs.getNodesVisited());
-            //         System.out.println("Execution time: " + ucs.getExecutionTime());
-            //     }
-            //     break;
+                if (solution != null) {
+                    System.out.println("Solution found with " + solution.getMoves().size() + " steps");
+                    System.out.println("Nodes visited: " + ucs.getNodesVisited());
+                    System.out.println("Execution time: " + ucs.getExecutionTime());
+                    System.out.println("\nSolution path:");
+                    ucs.printSolution(solution);
+                } else {
+                    System.out.println("No solution found!");
+                    System.out.println("Nodes visited: " + ucs.getNodesVisited());
+                    System.out.println("Execution time: " + ucs.getExecutionTime());
+                }
+                break;
                 
             default:
                 System.out.println("Unknown algorithm: " + algorithm);
-                System.out.println("Available algorithms: astar, bidirectional, gbfs, ucs");
+                System.out.println("Available algorithms: astar, dijkstra, gbfs, ucs");
                 break;
         }
     }
