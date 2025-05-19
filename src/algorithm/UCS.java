@@ -19,7 +19,10 @@ public class UCS {
         }
     }
 
-    public static List<Move> solve(Board board) {
+    private int nodesVisited;
+    private double executionTime;
+
+    public GameState solve(Board board) {
         // Initialize priority queue with cost as priority
         PriorityQueue<Node> openList = new PriorityQueue<>(Comparator.comparingDouble(n -> n.cost));
         Set<GameState> closedList = new HashSet<>();
@@ -29,8 +32,7 @@ public class UCS {
         Node initialNode = new Node(initialState, 0, null);
         openList.add(initialNode);
 
-        int nodesVisited = 0;
-
+        nodesVisited = 0;
         long startTime = System.nanoTime();
 
         while (!openList.isEmpty()) {
@@ -41,34 +43,8 @@ public class UCS {
 
             // Check if goal state is reached
             if (currentState.isGoal()) {
-                long endTime = System.nanoTime();
-                double executionTime = (endTime - startTime) / 1_000_000.0; // Convert to milliseconds
-
-                // Reconstruct path
-                List<Move> solution = new ArrayList<>();
-                Node node = currentNode;
-                while (node.parent != null) {
-                    solution.add(node.state.getMoves().get(node.state.getMoves().size() - 1));
-                    node = node.parent;
-                }
-                Collections.reverse(solution);
-
-                // Print results
-                System.out.println("Jumlah node yang diperiksa: " + nodesVisited);
-                System.out.printf("Waktu eksekusi: %.2f ms%n", executionTime);
-
-                // Print board states
-                Board currentBoard = board;
-                System.out.println("Papan Awal:");
-                currentBoard.printBoard(null);
-                for (int i = 0; i < solution.size(); i++) {
-                    Move move = solution.get(i);
-                    currentBoard = currentBoard.applyMove(move);
-                    System.out.println("Gerakan " + (i + 1) + ": " + move);
-                    currentBoard.printBoard(move);
-                }
-
-                return solution;
+                executionTime = (System.nanoTime() - startTime) / 1_000_000.0; // Convert to milliseconds
+                return currentState;
             }
 
             // Skip if state has been visited
@@ -89,7 +65,37 @@ public class UCS {
         }
 
         // No solution found
-        System.out.println("Tidak ada solusi yang ditemukan!");
+        executionTime = (System.nanoTime() - startTime) / 1_000_000.0;
         return null;
+    }
+
+    public void printSolution(GameState solution) {
+        if (solution == null) {
+            System.out.println("No solution to print.");
+            return;
+        }
+
+        Board currentBoard = solution.getBoard();
+        List<Move> moves = solution.getMoves();
+
+        // Print initial board
+        System.out.println("Papan Awal:");
+        currentBoard.printBoard(null);
+
+        // Print each move and resulting board
+        for (int i = 0; i < moves.size(); i++) {
+            Move move = moves.get(i);
+            currentBoard = currentBoard.applyMove(move);
+            System.out.println("Gerakan " + (i + 1) + ": " + move);
+            currentBoard.printBoard(move);
+        }
+    }
+
+    public int getNodesVisited() {
+        return nodesVisited;
+    }
+
+    public double getExecutionTime() {
+        return executionTime;
     }
 }
