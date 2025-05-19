@@ -24,7 +24,18 @@ public class GameState {
         this.moves = new ArrayList<>();
         this.g = 0;
         this.heuristicName = heuristicName;
-        this.h = computeHeuristic();
+        this.h = heuristicName.equals("none") ? 0 : computeHeuristic(); // Skip heuristic for "none"
+        this.f = g + h;
+    }
+
+    // Constructor for UCS (no heuristic calculation needed)
+    public GameState(Board board, List<Move> parentMoves, Move newMove, double parentG, boolean isUCS) {
+        this.board = board;
+        this.moves = new ArrayList<>(parentMoves);
+        this.moves.add(newMove);
+        this.g = parentG + 1;
+        this.heuristicName = "none";
+        this.h = isUCS ? 0 : computeHeuristic(); // Skip heuristic calculation for UCS
         this.f = g + h;
     }
 
@@ -40,13 +51,15 @@ public class GameState {
         this.moves.add(newMove);
         this.g = parentG + 1;
         this.heuristicName = heuristicName;
-        this.h = computeHeuristic();
+        this.h = heuristicName.equals("none") ? 0 : computeHeuristic(); // Skip heuristic for "none"
         this.f = g + h;
     }
 
     // Compute heuristic based on the selected heuristic name
     private double computeHeuristic() {
-        if (heuristicName == null || heuristicName.equals("manhattan")) {
+        if (heuristicName == null || heuristicName.equals("none")) {
+            return 0; // No heuristic for UCS
+        } else if (heuristicName.equals("manhattan")) {
             // Use the original implementation for backward compatibility
             Piece primary = board.getPrimaryPiece();
             int exitRow = board.getExitRow();
@@ -70,8 +83,15 @@ public class GameState {
         List<GameState> successors = new ArrayList<>();
         for (Move move : board.getAllPossibleMoves()) {
             Board newBoard = board.applyMove(move);
-            GameState successor = new GameState(newBoard, moves, move, g, heuristicName);
-            successors.add(successor);
+            // Use a special flag for UCS to avoid heuristic calculation
+            boolean isUCS = heuristicName.equals("none");
+            if (isUCS) {
+                GameState successor = new GameState(newBoard, moves, move, g, true);
+                successors.add(successor);
+            } else {
+                GameState successor = new GameState(newBoard, moves, move, g, heuristicName);
+                successors.add(successor);
+            }
         }
         return successors;
     }
@@ -96,7 +116,7 @@ public class GameState {
     public double getF() {
         return f;
     }
-    
+
     public String getHeuristicName() {
         return heuristicName;
     }
@@ -108,8 +128,10 @@ public class GameState {
     // Equality and hash code for state comparison
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GameState)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof GameState))
+            return false;
         GameState other = (GameState) o;
         char[][] thisGrid = board.getGrid();
         char[][] otherGrid = other.board.getGrid();
