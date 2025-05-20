@@ -3,19 +3,18 @@ package algorithm;
 import core.Board;
 import core.GameState;
 import core.Move;
-import utils.TimerUtil;
 
 import java.util.*;
 
 public class AStar {
-    private TimerUtil timer;
     private int nodesVisited;
+    private double executionTime;
     private String heuristicName;
     private Board initialBoard; 
     
     public AStar(String heuristicName) {
-        this.timer = new TimerUtil();
         this.nodesVisited = 0;
+        this.executionTime = 0.0;
         this.heuristicName = heuristicName;
     }
     
@@ -26,9 +25,9 @@ public class AStar {
      * @return GameState representing the solution, or null if no solution found
      */
     public GameState solve(Board initialBoard) {
-        timer.start();
         nodesVisited = 0;
-        this.initialBoard = initialBoard; // Simpan initial board
+        this.initialBoard = initialBoard;
+        long startTime = System.nanoTime();
         
         // Priority queue ordered by f value (g + h)
         PriorityQueue<GameState> openSet = new PriorityQueue<>(Comparator.comparingDouble(GameState::getF));
@@ -53,7 +52,7 @@ public class AStar {
             
             // Check if goal is reached
             if (current.isGoal()) {
-                timer.stop();
+                executionTime = (System.nanoTime() - startTime) / 1_000_000.0; // Convert to milliseconds
                 return current;
             }
             
@@ -94,7 +93,7 @@ public class AStar {
         }
         
         // No solution found
-        timer.stop();
+        executionTime = (System.nanoTime() - startTime) / 1_000_000.0;
         return null;
     }
     
@@ -152,7 +151,7 @@ public class AStar {
         
         System.out.println("Solusi ditemukan dalam " + moves.size() + " langkah");
         System.out.println("Jumlah node yang diperiksa: " + nodesVisited);
-        System.out.println("Waktu eksekusi: " + timer.getFormattedElapsedTime());
+        System.out.println("Waktu eksekusi: " + executionTime + " ms");
     }
     
     /**
@@ -163,17 +162,10 @@ public class AStar {
     }
     
     /**
-     * Gets the execution time
-     */
-    public String getExecutionTime() {
-        return timer.getFormattedElapsedTime();
-    }
-    
-    /**
      * Gets raw execution time in milliseconds
      */
-    public double getExecutionTimeMs() {
-        return timer.getElapsedTimeMs();
+    public double getExecutionTime() {
+        return executionTime;
     }
     
     /**
