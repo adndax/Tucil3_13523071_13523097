@@ -41,66 +41,65 @@ public class BoardPane extends GridPane {
         
         System.out.println("Working directory: " + System.getProperty("user.dir"));
     }
-    
+    // Di kelas BoardPane.java
+
     public void initializeBoard(char[][] board) {
         this.board = board;
         this.rows = board.length;
         this.cols = board[0].length;
-        
+
         this.getChildren().clear();
         pieceMap.clear();
-        
-        findExitPosition();
-        
-        calculateGridDimensions();
-        
-        System.out.println("Board contents:");
-        for (int i = 0; i < board.length; i++) {
-            System.out.println(new String(board[i]));
-        }
-        System.out.println("Exit position: row=" + exitRow + ", col=" + exitCol);
-        System.out.println("Grid dimensions: rows=" + gridRows + ", cols=" + gridCols);
-        
-        createEmptyCells();
-        placePieces();
-        
-        if (exitRow >= 0 && exitCol >= 0) {
-            placeExitDoor();
+
+        try {
+            findExitPosition();
+            calculateGridDimensions();
+
+            System.out.println("Board contents:");
+            for (int i = 0; i < board.length; i++) {
+                System.out.println(new String(board[i]));
+            }
+            System.out.println("Exit position: row=" + exitRow + ", col=" + exitCol);
+            System.out.println("Grid dimensions: rows=" + gridRows + ", cols=" + gridCols);
+
+            createEmptyCells();
+            placePieces();
+            
+            // Selalu tempatkan pintu keluar (K) jika ditemukan
+            if (exitRow >= 0 && exitCol >= 0) {
+                placeExitDoor();
+            } else {
+                System.err.println("WARNING: No exit door (K) found in the board!");
+            }
+        } catch (RuntimeException e) {
+            System.err.println(e.getMessage());
         }
     }
-    
+
     private void findExitPosition() {
         exitRow = -1;
         exitCol = -1;
         
+        // Cari posisi K di dalam board
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 if (board[row][col] == 'K') {
                     exitRow = row;
                     exitCol = col;
+                    System.out.println("Exit found in board at [" + row + "," + col + "]");
                     return;
                 }
             }
         }
+        
+        System.out.println("Exit not found in board matrix");
     }
-    
+
     private void calculateGridDimensions() {
         gridRows = rows;
         gridCols = cols;
-        
-        if (exitRow >= 0) {
-            if (exitRow >= rows) {
-                gridRows = exitRow + 1;
-            }
-        }
-        
-        if (exitCol >= 0) {
-            if (exitCol >= cols) {
-                gridCols = exitCol + 1;
-            }
-        }
     }
-    
+
     private void createEmptyCells() {
         for (int row = 0; row < gridRows; row++) {
             for (int col = 0; col < gridCols; col++) {
@@ -114,6 +113,50 @@ public class BoardPane extends GridPane {
                 add(cell, col, row);
             }
         }
+    }
+
+    private void placeExitDoor() {
+        if (exitRow < 0 || exitCol < 0 || exitRow >= board.length || exitCol >= board[0].length) {
+            System.err.println("ERROR: Exit position [" + exitRow + "," + exitCol + "] is out of bounds!");
+            return;
+        }
+        
+        // Buat node pintu keluar
+        StackPane exitNode = createExitNode();
+        
+        // Hapus cell kosong yang ada di posisi exit
+        getChildren().removeIf(node -> {
+            Integer colIndex = GridPane.getColumnIndex(node);
+            Integer rowIndex = GridPane.getRowIndex(node);
+            return colIndex != null && rowIndex != null && 
+                colIndex == exitCol && rowIndex == exitRow;
+        });
+        
+        // Tampilkan node pintu keluar
+        add(exitNode, exitCol, exitRow);
+        System.out.println("Placed EXIT door at row=" + exitRow + ", col=" + exitCol);
+        
+        pieceMap.put('K', exitNode);
+    }
+
+    private StackPane createExitNode() {
+        StackPane exitPane = new StackPane();
+        Rectangle exitRect = new Rectangle(cellSize, cellSize);
+        exitRect.getStyleClass().add("exit-door");
+        
+        // Ubah warna exit agar lebih mencolok
+        exitRect.setFill(Color.web("#FF5722")); // Warna oranye yang lebih mencolok
+        exitRect.setStroke(Color.web("#BF360C"));
+        exitRect.setStrokeWidth(2);
+        exitRect.setArcWidth(10);
+        exitRect.setArcHeight(10);
+        
+        Text exitLetter = new Text("K");
+        exitLetter.setFill(Color.WHITE);
+        exitLetter.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        
+        exitPane.getChildren().addAll(exitRect, exitLetter);
+        return exitPane;
     }
     
     private void placePieces() {
@@ -132,14 +175,6 @@ public class BoardPane extends GridPane {
                 }
             }
         }
-    }
-    
-    private void placeExitDoor() {
-        StackPane exitNode = createExitNode();
-        add(exitNode, exitCol, exitRow);
-        System.out.println("Placed EXIT door at row=" + exitRow + ", col=" + exitCol);
-        
-        pieceMap.put('K', exitNode);
     }
     
     private void placePiece(char piece, int row, int col) {
@@ -173,25 +208,6 @@ public class BoardPane extends GridPane {
         
         piecePane.getChildren().addAll(rect, pieceText);
         return piecePane;
-    }
-
-    private StackPane createExitNode() {
-        StackPane exitPane = new StackPane();
-        Rectangle exitRect = new Rectangle(cellSize, cellSize);
-        exitRect.getStyleClass().add("exit-door");
-        
-        exitRect.setFill(Color.web("#4CAF50"));
-        exitRect.setStroke(Color.web("#388E3C"));
-        exitRect.setStrokeWidth(2);
-        exitRect.setArcWidth(10);
-        exitRect.setArcHeight(10);
-        
-        Text exitLetter = new Text("K");
-        exitLetter.setFill(Color.WHITE);
-        exitLetter.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        
-        exitPane.getChildren().addAll(exitRect, exitLetter);
-        return exitPane;
     }
     
     private Rectangle createPieceRectangle(char piece) {

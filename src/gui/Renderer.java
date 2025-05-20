@@ -60,7 +60,14 @@ public class Renderer {
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(file));
-            String[] dimensions = reader.readLine().split(" ");
+            
+            // Parse dimensions
+            String dimensionsLine = reader.readLine();
+            if (dimensionsLine == null) {
+                throw new IllegalArgumentException("File is empty or cannot be read.");
+            }
+            
+            String[] dimensions = dimensionsLine.split("\\s+");
             if (dimensions.length < 2) {
                 throw new IllegalArgumentException("Invalid dimensions format");
             }
@@ -72,253 +79,355 @@ public class Renderer {
             
             // Skip baris kedua yang berisi jumlah piece
             String secondLine = reader.readLine();
-            boolean isNumericLine = false;
+            boolean isNumericLine = true;
             
             try {
                 Integer.parseInt(secondLine.trim());
-                isNumericLine = true;
             } catch (NumberFormatException e) {
-                // Bukan angka, jadi ini adalah baris pertama board
                 isNumericLine = false;
             }
             
-            // Baca seluruh konfigurasi board
+            // --- Ambil baris board, deteksi jika ada baris K di atas grid utama ---
             List<String> boardLines = new ArrayList<>();
-            if (!isNumericLine) {
-                boardLines.add(secondLine);
-            }
-            
-            for (int i = (isNumericLine ? 0 : 1); i < rows; i++) {
-                String line = reader.readLine();
-                if (line == null) {
-                    throw new IllegalArgumentException("File terlalu pendek, kurang baris");
-                }
-                boardLines.add(line);
-            }
-            
-            // Cari posisi K dan column pertama dengan isi
+            String line;
+            int leftPadding = 0;
+            boolean hasLeftK = false;
+            boolean hasTopK = false; // Flag untuk K di baris pertama
             boolean exitExists = false;
             int exitRow = -1, exitCol = -1;
-            int firstNonSpaceCol = Integer.MAX_VALUE;
-            int lastNonSpaceCol = -1;
-            
-            // Cari first non-space column dan K position
-            for (int i = 0; i < boardLines.size(); i++) {
-                String line = boardLines.get(i);
-                
-                // Find first non-space position
-                for (int j = 0; j < line.length(); j++) {
-                    if (line.charAt(j) != ' ') {
-                        firstNonSpaceCol = Math.min(firstNonSpaceCol, j);
-                        lastNonSpaceCol = Math.max(lastNonSpaceCol, j);
-                        
-                        // Check if this is K
-                        if (line.charAt(j) == 'K') {
-                            exitExists = true;
-                            exitRow = i;
-                            exitCol = j;
-                        }
-                    }
+
+            // baris kedua sudah dicek, langsung lanjut baca
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                // Deteksi baris K di atas grid: hanya K atau hanya spasi+K
+                if (boardLines.isEmpty() && (trimmed.equals("K") || (trimmed.length() > 1 && trimmed.replace("K", "").trim().isEmpty()))) {
+                    hasTopK = true;
+                    exitCol = line.indexOf('K');
+                    System.out.println("K found in top row at col: " + exitCol);
+                    continue; // SKIP baris ini, jangan masukin ke boardLines
                 }
+                boardLines.add(line);
+                // Stop jika sudah cukup baris grid
+                if (boardLines.size() >= rows) break;
             }
             
-            // Jika tidak ada konten selain spasi
-            if (firstNonSpaceCol == Integer.MAX_VALUE) {
-                firstNonSpaceCol = 0;
+            // Cari minimum padding kiri di semua baris
+            int minLeadingSpace = Integer.MAX_VALUE;
+            for (String boardLine : boardLines) {
+                if (boardLine.trim().isEmpty()) continue;
+                int leadingSpaces = boardLine.indexOf(boardLine.trim().charAt(0));
+                minLeadingSpace = Math.min(minLeadingSpace, leadingSpaces);
             }
+            if (minLeadingSpace == Integer.MAX_VALUE) minLeadingSpace = 0;
+            leftPadding = minLeadingSpace;
             
-            // Menghitung offset kiri dan kanan
-            int leftOffset = 0;
-            int rightOffset = 0;
-            
-            if (exitExists) {
-                if (exitCol < firstNonSpaceCol) {
-                    // K di sebelah kiri semua konten
-                    leftOffset = 1;
-                } else if (exitCol > lastNonSpaceCol) {
-                    // K di sebelah kanan semua konten
-                    rightOffset = 1;
-                }
-            }
+            System.out.println("Minimum leading spaces: " + leftPadding);
             
             // Mencari primary piece dan orientasinya
             boolean foundPrimaryPiece = false;
             boolean isHorizontal = false;
             int pRow = -1, pCol = -1;
             
-            for (int i = 0; i < boardLines.size(); i++) {
-                String line = boardLines.get(i);
-                int pIndex = line.indexOf('P');
-                if (pIndex >= 0) {
-                    foundPrimaryPiece = true;
-                    pRow = i;
-                    pCol = pIndex - firstNonSpaceCol + leftOffset;
-                    
-                    // Periksa orientasi
-                    if (pIndex + 1 < line.length() && line.charAt(pIndex + 1) == 'P') {
-                        isHorizontal = true;
-                    } else if (pIndex > 0 && line.charAt(pIndex - 1) == 'P') {
-                        isHorizontal = true;
-                    } else {
-                        isHorizontal = false;
-                    }
-                    break;
+            // TAHAP 0: Periksa K di baris pertama (SEBELUM grid normal) - baru
+            if (boardLines.size() > 0) {
+                String firstLine = boardLines.get(0);
+                if (firstLine.contains("K") && firstLine.indexOf('K') <= firstLine.length() - 1) {
+                    // K di baris pertama
+                    exitExists = true;
+                    exitRow = 0;
+                    exitCol = firstLine.indexOf('K') - leftPadding;
+                    hasTopK = true;
+                    System.out.println("K found in first row at col " + exitCol);
                 }
             }
             
-            // Jika tidak ada P atau K, cari orientasi dari baris lain
-            if (foundPrimaryPiece && !isHorizontal) {
-                for (int i = 0; i < boardLines.size(); i++) {
-                    if (i == pRow) continue; // Skip baris primary piece
-                    String line = boardLines.get(i);
-                    if (line.length() > exitCol && line.charAt(exitCol) == 'P') {
-                        // P ditemukan pada kolom yang sama di baris berbeda
-                        isHorizontal = false;
+            // TAHAP 1: Periksa K di awal baris (dengan spasi awal)
+            if (!exitExists) {
+                for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
+                    String currentLine = boardLines.get(i);
+                    if (currentLine.trim().startsWith("K")) {
+                        exitExists = true;
+                        exitRow = i;
+                        
+                        // Hitung posisi K relatif terhadap leftPadding
+                        int kPos = currentLine.indexOf('K');
+                        if (kPos - leftPadding <= 0) {
+                            // K berada di awal setelah padding
+                            exitCol = 0;
+                            hasLeftK = true;
+                            System.out.println("K found at start of row " + i + " with left padding " + leftPadding);
+                        } else {
+                            // K berada di posisi lain
+                            exitCol = kPos - leftPadding;
+                            System.out.println("K found in row " + i + " at col " + exitCol);
+                        }
                         break;
                     }
                 }
             }
             
+            // TAHAP 2: Periksa K di dalam board normal
+            if (!exitExists) {
+                for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
+                    String currentLine = boardLines.get(i);
+                    int kIndex = currentLine.indexOf('K');
+                    if (kIndex != -1) {
+                        exitExists = true;
+                        exitRow = i;
+                        exitCol = kIndex - leftPadding;
+                        
+                        // Jika K berada di posisi awal setelah padding
+                        if (kIndex - leftPadding <= 0) {
+                            hasLeftK = true;
+                            exitCol = 0;
+                        }
+                        
+                        System.out.println("K found in board at row " + i + ", col " + exitCol);
+                        break;
+                    }
+                }
+            }
+            
+            // TAHAP 3: Periksa K di baris tambahan di bawah
+            if (!exitExists && boardLines.size() > rows) {
+                for (int i = rows; i < boardLines.size(); i++) {
+                    String currentLine = boardLines.get(i);
+                    int kIndex = currentLine.indexOf('K');
+                    if (kIndex != -1) {
+                        exitExists = true;
+                        exitRow = i;
+                        exitCol = kIndex - leftPadding;
+                        
+                        if (kIndex - leftPadding <= 0) {
+                            exitCol = 0;
+                            hasLeftK = true;
+                        }
+                        
+                        System.out.println("K found in additional line " + i + " at col " + exitCol);
+                        break;
+                    }
+                }
+            }
+            
+            // TAHAP 4: Periksa K di akhir baris (setelah ukuran normal board)
+            if (!exitExists) {
+                for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
+                    String currentLine = boardLines.get(i);
+                    if (currentLine.length() > cols + leftPadding) {
+                        int endIndex = cols + leftPadding;
+                        if (endIndex < currentLine.length() && currentLine.charAt(endIndex) == 'K') {
+                            exitExists = true;
+                            exitRow = i;
+                            exitCol = cols;
+                            System.out.println("K found at end of row " + i + " after board width");
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Cari primary piece (P) dan tentukan orientasinya
+            for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
+                String currentLine = boardLines.get(i);
+                if (currentLine.length() <= leftPadding) continue;
+                
+                for (int j = leftPadding; j < currentLine.length(); j++) {
+                    char c = currentLine.charAt(j);
+                    
+                    if (c == 'P') {
+                        if (!foundPrimaryPiece) {
+                            pRow = i;
+                            pCol = j - leftPadding;
+                            foundPrimaryPiece = true;
+                        }
+                        
+                        // Periksa orientasi
+                        if (j > leftPadding && currentLine.charAt(j-1) == 'P') isHorizontal = true;
+                        if (j < currentLine.length()-1 && currentLine.charAt(j+1) == 'P') isHorizontal = true;
+                    }
+                }
+            }
+            
+            // Periksa orientasi vertikal dari P jika belum terdeteksi horizontal
+            if (foundPrimaryPiece && !isHorizontal) {
+                for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
+                    if (i == pRow) continue; // Skip baris primary piece
+                    
+                    String currentLine = boardLines.get(i);
+                    int adjustedCol = pCol + leftPadding;
+                    
+                    if (adjustedCol < currentLine.length() && currentLine.charAt(adjustedCol) == 'P') {
+                        isHorizontal = false; // Konfirmasi bahwa orientasi vertikal
+                        break;
+                    }
+                }
+            }
+            
+            // Log posisi piece dan exit yang ditemukan
             System.out.println("Primary piece found at [" + pRow + "," + pCol + "], Orientation: " + 
                             (isHorizontal ? "Horizontal" : "Vertical"));
-            System.out.println("First non-space column: " + firstNonSpaceCol + ", Last non-space column: " + lastNonSpaceCol);
             
-            // Menentukan dimensi final board
-            int effectiveContentWidth = lastNonSpaceCol - firstNonSpaceCol + 1;
-            int effectiveContentHeight = boardLines.size();
-            
-            // Calculate final dimensions ensuring we have full cols with possible exit points
-            int finalRows = Math.max(rows, effectiveContentHeight + (isHorizontal ? 0 : 1));
-            int finalCols = Math.max(cols, effectiveContentWidth + leftOffset + rightOffset);
-            
-            // Jika belum ada exit, tambahkan satu kolom/baris untuk exit berdasarkan orientasi
-            if (!exitExists && foundPrimaryPiece) {
-                if (isHorizontal) {
-                    finalCols++; // Tambah kolom di kanan untuk exit
-                    rightOffset = 1;
-                } else {
-                    finalRows++; // Tambah baris di bawah untuk exit
-                }
+            if (exitExists) {
+                System.out.println("Exit found at [" + exitRow + "," + exitCol + "]");
+                System.out.println("hasLeftK: " + hasLeftK + ", hasTopK: " + hasTopK);
+            } else {
+                System.out.println("No exit found, will add one automatically");
             }
             
-            System.out.println("Calculated dimensions: " + finalRows + "x" + finalCols + 
-                            " (leftOffset=" + leftOffset + ", rightOffset=" + rightOffset + ")");
-            
+            // Hitung dimensi board final
+            int finalRows = rows;
+            int finalCols = cols;
+
+            // Jika K di baris tambahan di bawah, perluas baris
+            if (exitExists && exitRow >= rows) {
+                finalRows = exitRow + 1;
+                System.out.println("Expanding rows for bottom exit: Final rows = " + finalRows);
+            }
+
+            // Jika K di akhir kolom, perluas kolom
+            if (exitExists && exitCol >= cols) {
+                finalCols = exitCol + 1;
+                System.out.println("Expanding cols for right exit: Final cols = " + finalCols);
+            }
+
+            // Jika K di awal kolom (kolom 0), tambahkan kolom di kiri
+            if (hasLeftK) {
+                finalCols += 1;
+                System.out.println("Adding column for left K: Final cols = " + finalCols);
+            }
+
+            // Jika tidak ada exit, tambahkan sesuai orientasi mobil
+            if (!exitExists && foundPrimaryPiece) {
+                if (isHorizontal) {
+                    // Tambahkan exit di kanan untuk horizontal
+                    exitRow = pRow;
+                    exitCol = cols;
+                    finalCols += 1;
+                    exitExists = true;
+                    System.out.println("Added automatic exit for horizontal at [" + exitRow + "," + exitCol + "]");
+                } else {
+                    // Tambahkan exit di bawah untuk vertikal
+                    exitRow = rows;
+                    exitCol = pCol;
+                    finalRows += 1;
+                    exitExists = true;
+                    System.out.println("Added automatic exit for vertical at [" + exitRow + "," + exitCol + "]");
+                }
+            }
+
             // Buat board dengan dimensi final
             currentBoard = new char[finalRows][finalCols];
-            
-            // Isi dengan '.'
-            for (int i = 0; i < finalRows; i++) {
-                for (int j = 0; j < finalCols; j++) {
-                    currentBoard[i][j] = '.';
-                }
-            }
-            
-            // Salin konten dari input ke board dengan offset yang tepat
-            for (int i = 0; i < boardLines.size() && i < rows; i++) {
-                String line = boardLines.get(i);
-                for (int j = 0; j < line.length(); j++) {
-                    char c = line.charAt(j);
-                    if (c == ' ') continue; // Skip spasi
-                    
-                    // Hitung posisi di board baru dengan offset
-                    int newCol = j - firstNonSpaceCol + leftOffset;
-                    
-                    if (newCol >= 0 && newCol < finalCols) {
-                        currentBoard[i][newCol] = c;
+
+            // Isi dengan '.' dan perlakukan kasus hasTopK secara khusus
+            if (hasTopK) {
+                // Isi semua dengan '.' dulu
+                for (int i = 0; i < finalRows; i++) {
+                    for (int j = 0; j < finalCols; j++) {
+                        currentBoard[i][j] = '.';
                     }
                 }
-            }
-            
-            // Jika exit belum ada, tambahkan berdasarkan orientasi primary piece
-            if (!exitExists && foundPrimaryPiece) {
-                if (isHorizontal) {
-                    currentBoard[pRow][finalCols - 1] = 'K';
-                    exitRow = pRow;
-                    exitCol = finalCols - 1;
-                    System.out.println("Added horizontal exit at [" + exitRow + "," + exitCol + "]");
-                } else {
-                    currentBoard[finalRows - 1][pCol] = 'K';
-                    exitRow = finalRows - 1;
-                    exitCol = pCol;
-                    System.out.println("Added vertical exit at [" + exitRow + "," + exitCol + "]");
-                }
-            }
-            
-            // Pastikan K diletakkan dengan benar jika sudah ada
-            if (exitExists) {
-                // Tentukan posisi K dalam board baru
-                int newExitRow = exitRow;
-                int newExitCol = exitCol - firstNonSpaceCol + leftOffset;
                 
-                // Pastikan posisi valid
-                if (newExitRow >= 0 && newExitRow < finalRows && 
-                    newExitCol >= 0 && newExitCol < finalCols) {
-                    // Hapus K dari posisi lain (jika ada)
-                    for (int i = 0; i < finalRows; i++) {
-                        for (int j = 0; j < finalCols; j++) {
-                            if (currentBoard[i][j] == 'K' && (i != newExitRow || j != newExitCol)) {
-                                currentBoard[i][j] = '.';
-                            }
-                        }
-                    }
+                // Letakkan K di baris 0 pada kolom exitCol
+                int adjustedExitCol = exitCol;
+                if (hasLeftK) adjustedExitCol += 1; // Adjusting for hasLeftK
+                currentBoard[0][adjustedExitCol] = 'K';
+                System.out.println("Placed K at top row [0," + adjustedExitCol + "]");
+                
+                // Salin konten boardLines ke board, dimulai dari baris 1
+                for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
+                    String currentLine = boardLines.get(i);
+                    if (currentLine.length() <= leftPadding) continue;
                     
-                    // Tempatkan K di posisi yang benar
-                    currentBoard[newExitRow][newExitCol] = 'K';
-                    
-                    System.out.println("Placed exit at [" + newExitRow + "," + newExitCol + "]");
-                }
-            }
-            
-            // Bersihkan kolom/baris exit - tidak boleh ada piece lain di kolom/baris K kecuali primary piece
-            for (int i = 0; i < finalRows; i++) {
-                for (int j = 0; j < finalCols; j++) {
-                    if (currentBoard[i][j] == 'K') {
-                        // Jika horizontal, bersihkan kolom K
-                        if (isHorizontal) {
-                            for (int row = 0; row < finalRows; row++) {
-                                if (row != i && currentBoard[row][j] != 'P') {
-                                    currentBoard[row][j] = '.';
-                                }
-                            }
-                        } 
-                        // Jika vertical, bersihkan baris K
-                        else {
-                            for (int col = 0; col < finalCols; col++) {
-                                if (col != j && currentBoard[i][col] != 'P') {
-                                    currentBoard[i][col] = '.';
-                                }
-                            }
+                    for (int j = leftPadding; j < currentLine.length(); j++) {
+                        char c = currentLine.charAt(j);
+                        if (c == ' ' || c == 'K') continue; // Skip spasi dan K
+                        
+                        // Hitung posisi kolom pada board
+                        int destCol = j - leftPadding;
+                        
+                        // Pastikan koordinat valid untuk baris i+1 (karena baris 0 untuk K)
+                        if (i+1 < finalRows && destCol >= 0 && destCol < finalCols) {
+                            currentBoard[i+1][destCol] = c;
                         }
                     }
                 }
+            } else {
+                // Untuk kasus non-hasTopK, gunakan kode yang sudah ada
+                // Isi dengan '.'
+                for (int i = 0; i < finalRows; i++) {
+                    for (int j = 0; j < finalCols; j++) {
+                        currentBoard[i][j] = '.';
+                    }
+                }
+                
+                // Salin konten dari input ke board
+                for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
+                    String currentLine = boardLines.get(i);
+                    if (currentLine.length() <= leftPadding) continue;
+                    
+                    for (int j = leftPadding; j < currentLine.length(); j++) {
+                        char c = currentLine.charAt(j);
+                        if (c == ' ') continue; // Skip spasi
+                        
+                        // Hitung posisi kolom pada board
+                        int destCol = j - leftPadding;
+                        
+                        // Khusus untuk K di kolom pertama
+                        if (c == 'K' && hasLeftK && j - leftPadding <= 0) {
+                            destCol = 0;  // K di kolom 0
+                        }
+                        
+                        // Pastikan koordinat valid
+                        if (i >= 0 && i < finalRows && destCol >= 0 && destCol < finalCols) {
+                            currentBoard[i][destCol] = c;
+                        }
+                    }
+                }
+                
+                // Tambahkan K untuk kasus khusus non-hasTopK
+                if (exitExists) {
+                    // Untuk K di kolom pertama
+                    if (hasLeftK) {
+                        currentBoard[exitRow][0] = 'K';
+                        System.out.println("Placed K at left [" + exitRow + ",0]");
+                    }
+                    
+                    // Untuk K di baris tambahan di bawah
+                    if (exitRow >= rows) {
+                        int adjustedExitCol = exitCol;
+                        if (hasLeftK) adjustedExitCol += 1;
+                        
+                        // Jika P vertikal, sejajarkan K dengan kolom P
+                        if (!isHorizontal && foundPrimaryPiece) {
+                            adjustedExitCol = pCol + (hasLeftK ? 1 : 0);
+                        }
+                        
+                        if (exitRow >= 0 && exitRow < finalRows && adjustedExitCol >= 0 && adjustedExitCol < finalCols) {
+                            currentBoard[exitRow][adjustedExitCol] = 'K';
+                            System.out.println("Placed K at bottom [" + exitRow + "," + adjustedExitCol + "]");
+                        }
+                    }
+                    
+                    // Untuk K di akhir kolom
+                    if (exitCol >= cols && !hasLeftK) {
+                        int adjustedExitCol = finalCols - 1;
+                        
+                        if (exitRow >= 0 && exitRow < finalRows) {
+                            currentBoard[exitRow][adjustedExitCol] = 'K';
+                            System.out.println("Placed K at right [" + exitRow + "," + adjustedExitCol + "]");
+                        }
+                    }
+                }
             }
-            
-            // Debug: Tampilkan board final
-            System.out.println("Final board contents:");
+
+            // Debug board setelah dimodifikasi
+            System.out.println("Final board contents (" + finalRows + "x" + finalCols + "):");
             for (int i = 0; i < currentBoard.length; i++) {
                 System.out.println(new String(currentBoard[i]));
             }
-            
-            // Temukan posisi exit
-            exitRow = -1;
-            exitCol = -1;
-            for (int i = 0; i < finalRows; i++) {
-                for (int j = 0; j < finalCols; j++) {
-                    if (currentBoard[i][j] == 'K') {
-                        exitRow = i;
-                        exitCol = j;
-                        break;
-                    }
-                }
-                if (exitRow != -1) break;
-            }
-            
-            System.out.println("Final exit position: row=" + exitRow + ", col=" + exitCol);
-            System.out.println("Grid dimensions: rows=" + finalRows + ", cols=" + finalCols);
-            
+                        
             // Inisialisasi board pada GUI
-            boardPane.initializeBoard(currentBoard);
+            boardPane.updateBoard(currentBoard);
             
             solutionSteps.clear();
             currentStepIndex = -1;
