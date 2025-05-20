@@ -3,14 +3,12 @@ package core;
 public class Move {
     private char pieceId;
     private String direction;
-    private int steps; // Jumlah langkah yang diambil
+    private int steps; 
 
-    // Constructor dengan jumlah langkah default = 1
     public Move(char pieceId, String direction) {
         this(pieceId, direction, 1);
     }
 
-    // Constructor dengan langkah eksplisit
     public Move(char pieceId, String direction, int steps) {
         if (!isValidDirection(direction)) {
             throw new IllegalArgumentException("Invalid direction: " + direction);
@@ -23,7 +21,6 @@ public class Move {
         this.steps = steps;
     }
 
-    // Constructor dari string format
     public Move(String moveString) {
         String[] parts = moveString.split("-");
         if (parts.length < 2 || parts.length > 3 || parts[0].length() != 1) {
@@ -37,7 +34,6 @@ public class Move {
             throw new IllegalArgumentException("Invalid direction in move: " + direction);
         }
         
-        // Parse steps if provided
         this.steps = (parts.length == 3) ? Integer.parseInt(parts[2]) : 1;
         
         if (steps < 1) {

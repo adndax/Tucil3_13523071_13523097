@@ -8,59 +8,52 @@ import algorithm.Heuristics;
 public class GameState {
     private final Board board;
     private final List<Move> moves;
-    private final double g; // Path cost (number of moves)
-    private final double h; // Heuristic value
-    private final double f; // Total cost (g + h for A*)
-    private final String heuristicName; // Name of the heuristic being used
+    private final double g; 
+    private final double h; 
+    private final double f; 
+    private final String heuristicName; 
 
-    // Constructor for initial state with default heuristic
     public GameState(Board board) {
         this(board, "manhattan");
     }
 
-    // Constructor for initial state with specified heuristic
     public GameState(Board board, String heuristicName) {
         this.board = board;
         this.moves = new ArrayList<>();
         this.g = 0;
         this.heuristicName = heuristicName;
-        this.h = heuristicName.equals("none") ? 0 : computeHeuristic(); // Skip heuristic for "none"
+        this.h = heuristicName.equals("none") ? 0 : computeHeuristic(); 
         this.f = g + h;
     }
 
-    // Constructor for UCS (no heuristic calculation needed)
     public GameState(Board board, List<Move> parentMoves, Move newMove, double parentG, boolean isUCS) {
         this.board = board;
         this.moves = new ArrayList<>(parentMoves);
         this.moves.add(newMove);
         this.g = parentG + 1;
         this.heuristicName = "none";
-        this.h = isUCS ? 0 : computeHeuristic(); // Skip heuristic calculation for UCS
+        this.h = isUCS ? 0 : computeHeuristic(); 
         this.f = g + h;
     }
 
-    // Constructor for successor state with default heuristic
     public GameState(Board board, List<Move> parentMoves, Move newMove, double parentG) {
         this(board, parentMoves, newMove, parentG, "manhattan");
     }
 
-    // Constructor for successor state with specified heuristic
     public GameState(Board board, List<Move> parentMoves, Move newMove, double parentG, String heuristicName) {
         this.board = board;
         this.moves = new ArrayList<>(parentMoves);
         this.moves.add(newMove);
         this.g = parentG + 1;
         this.heuristicName = heuristicName;
-        this.h = heuristicName.equals("none") ? 0 : computeHeuristic(); // Skip heuristic for "none"
+        this.h = heuristicName.equals("none") ? 0 : computeHeuristic(); 
         this.f = g + h;
     }
 
-    // Compute heuristic based on the selected heuristic name
     private double computeHeuristic() {
         if (heuristicName == null || heuristicName.equals("none")) {
-            return 0; // No heuristic for UCS
+            return 0;
         } else if (heuristicName.equals("manhattan")) {
-            // Use the original implementation for backward compatibility
             Piece primary = board.getPrimaryPiece();
             int exitRow = board.getExitRow();
             int exitCol = board.getExitCol();
@@ -73,7 +66,6 @@ public class GameState {
                 return Math.abs(pieceEndRow - exitRow);
             }
         } else {
-            // Use the Heuristics utility class for other heuristics
             return Heuristics.getHeuristic(board, heuristicName);
         }
     }
@@ -83,7 +75,6 @@ public class GameState {
         List<GameState> successors = new ArrayList<>();
         for (Move move : board.getAllPossibleMoves()) {
             Board newBoard = board.applyMove(move);
-            // Use a special flag for UCS to avoid heuristic calculation
             boolean isUCS = heuristicName.equals("none");
             if (isUCS) {
                 GameState successor = new GameState(newBoard, moves, move, g, true);
@@ -96,7 +87,6 @@ public class GameState {
         return successors;
     }
 
-    // Getters
     public Board getBoard() {
         return board;
     }
@@ -125,7 +115,6 @@ public class GameState {
         return board.isSolved();
     }
 
-    // Equality and hash code for state comparison
     @Override
     public boolean equals(Object o) {
         if (this == o)

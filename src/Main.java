@@ -15,10 +15,8 @@ public class Main {
     public static void main(String[] args) {
         try {
             if (args.length > 0) {
-                // Jika ada argumen berarti file langsung dijalankan dari command line
                 runPuzzleFromFile(args[0]);
             } else {
-                // Gunakan test file default
                 runPuzzleFromFile("test/test1.txt");
             }
         } catch (IOException e) {
@@ -27,14 +25,9 @@ public class Main {
         }
     }
     
-    /**
-     * Run puzzle from file with algorithm and heuristic specified in the file
-     */
     private static void runPuzzleFromFile(String filepath) throws IOException {
-        // Baca file input untuk mendapatkan konfigurasi board, algoritma, dan heuristic
         BufferedReader reader = new BufferedReader(new FileReader(filepath));
         
-        // Baca semua baris untuk mendapatkan konfigurasi papan
         StringBuilder boardConfigBuilder = new StringBuilder();
         
         String line;
@@ -47,29 +40,23 @@ public class Main {
             lineCount++;
             
             if (lineCount == 1) {
-                // Baris pertama berisi dimensi papan
                 String[] parts = line.trim().split("\\s+");
                 if (parts.length >= 2) {
                     numRows = Integer.parseInt(parts[0]);
                 }
                 boardConfigBuilder.append(line).append("\n");
             } else if (lineCount == 2) {
-                // Baris kedua berisi jumlah piece
                 boardConfigBuilder.append(line).append("\n");
             } else if (lineCount <= numRows + 2) {
-                // Baris-baris berikutnya berisi konfigurasi papan
                 boardConfigBuilder.append(line).append("\n");
             } else if (algorithm == null) {
-                // Baris setelah konfigurasi papan berisi algoritma
                 algorithm = line.trim().toLowerCase();
             } else if (heuristic == null) {
-                // Baris terakhir berisi heuristic (jika ada)
                 heuristic = line.trim().toLowerCase();
             }
         }
         reader.close();
         
-        // Validasi dan set default untuk algoritma
         boolean validAlgorithm = false;
         for (String validAlg : VALID_ALGORITHMS) {
             if (validAlg.equals(algorithm)) {
@@ -79,11 +66,10 @@ public class Main {
         }
         
         if (!validAlgorithm) {
-            algorithm = "astar"; // Default
+            algorithm = "astar"; 
             System.out.println("Invalid or no algorithm specified, using A* as default.");
         }
         
-        // Validasi dan set default untuk heuristic
         boolean validHeuristic = false;
         for (String validHeur : VALID_HEURISTICS) {
             if (validHeur.equals(heuristic)) {
@@ -93,16 +79,14 @@ public class Main {
         }
         
         if (!validHeuristic) {
-            heuristic = "manhattan"; // Default
+            heuristic = "manhattan"; 
             System.out.println("Invalid or no heuristic specified, using Manhattan distance as default.");
         }
         
-        // UCS tidak menggunakan heuristic
         if (algorithm.equals("ucs")) {
             System.out.println("Note: UCS does not use heuristic functions, ignoring heuristic setting.");
         }
         
-        // Buat temporary file untuk konfigurasi papan saja
         java.io.File tempFile = java.io.File.createTempFile("rushHourBoard", ".txt");
         tempFile.deleteOnExit();
         
@@ -110,7 +94,6 @@ public class Main {
         writer.write(boardConfigBuilder.toString());
         writer.close();
         
-        // Load board dari file temporary
         Board board = new Board(tempFile.getAbsolutePath());
         
         System.out.println("=== Puzzle Configuration ===");
@@ -121,13 +104,9 @@ public class Main {
         System.out.println("\nInitial Board:");
         board.printBoard(null);
         
-        // Jalankan algoritma yang sesuai
         runAlgorithm(algorithm, heuristic, board);
     }
     
-    /**
-     * Run the specified algorithm with the specified heuristic
-     */
     private static void runAlgorithm(String algorithm, String heuristic, Board board) {
         if (!algorithm.equals("ucs")) {
             System.out.println("\n=== Running " + algorithm.toUpperCase() + " with " + heuristic + " heuristic ===");

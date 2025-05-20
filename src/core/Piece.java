@@ -44,12 +44,10 @@ public class Piece {
         return isPrimary;
     }
 
-    // Mendapatkan semua pergerakan yang mungkin
     public Move[] getPossibleMoves(Board board) {
         List<Move> moves = new ArrayList<>();
         
         if (isHorizontal) {
-            // Pergerakan ke kiri
             int maxStepsLeft = 0;
             for (int step = 1; col - step >= 0; step++) {
                 if (board.isCellEmpty(row, col - step)) {
@@ -59,12 +57,10 @@ public class Piece {
                 }
             }
             
-            // Tambahkan pergerakan ke kiri untuk setiap langkah yang mungkin
             for (int step = 1; step <= maxStepsLeft; step++) {
                 moves.add(new Move(id, "kiri", step));
             }
             
-            // Pergerakan ke kanan
             int maxStepsRight = 0;
             for (int step = 1; col + size - 1 + step < board.getCols(); step++) {
                 if (board.isCellEmpty(row, col + size - 1 + step)) {
@@ -74,13 +70,11 @@ public class Piece {
                 }
             }
             
-            // Tambahkan pergerakan ke kanan untuk setiap langkah yang mungkin
             for (int step = 1; step <= maxStepsRight; step++) {
                 moves.add(new Move(id, "kanan", step));
             }
             
         } else {
-            // Pergerakan ke atas
             int maxStepsUp = 0;
             for (int step = 1; row - step >= 0; step++) {
                 if (board.isCellEmpty(row - step, col)) {
@@ -90,12 +84,10 @@ public class Piece {
                 }
             }
             
-            // Tambahkan pergerakan ke atas untuk setiap langkah yang mungkin
             for (int step = 1; step <= maxStepsUp; step++) {
                 moves.add(new Move(id, "atas", step));
             }
             
-            // Pergerakan ke bawah
             int maxStepsDown = 0;
             for (int step = 1; row + size - 1 + step < board.getRows(); step++) {
                 if (board.isCellEmpty(row + size - 1 + step, col)) {
@@ -105,7 +97,6 @@ public class Piece {
                 }
             }
             
-            // Tambahkan pergerakan ke bawah untuk setiap langkah yang mungkin
             for (int step = 1; step <= maxStepsDown; step++) {
                 moves.add(new Move(id, "bawah", step));
             }
@@ -114,7 +105,6 @@ public class Piece {
         return moves.toArray(new Move[0]);
     }
 
-    // Menerapkan gerakan
     public Piece applyMove(Move move) {
         String direction = move.getDirection();
         int steps = move.getSteps();
@@ -138,7 +128,6 @@ public class Piece {
         return new Piece(id, newRow, newCol, size, isHorizontal, isPrimary);
     }
 
-    // Mendapatkan semua sel yang ditempati oleh piece ini
     public int[][] getOccupiedCells() {
         int[][] cells = new int[size][2];
         for (int i = 0; i < size; i++) {

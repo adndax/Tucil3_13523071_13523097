@@ -41,7 +41,6 @@ public class BoardPane extends GridPane {
         
         System.out.println("Working directory: " + System.getProperty("user.dir"));
     }
-    // Di kelas BoardPane.java
 
     public void initializeBoard(char[][] board) {
         this.board = board;
@@ -65,7 +64,6 @@ public class BoardPane extends GridPane {
             createEmptyCells();
             placePieces();
             
-            // Selalu tempatkan pintu keluar (K) jika ditemukan
             if (exitRow >= 0 && exitCol >= 0) {
                 placeExitDoor();
             } else {
@@ -80,7 +78,6 @@ public class BoardPane extends GridPane {
         exitRow = -1;
         exitCol = -1;
         
-        // Cari posisi K di dalam board
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 if (board[row][col] == 'K') {
@@ -121,10 +118,8 @@ public class BoardPane extends GridPane {
             return;
         }
         
-        // Buat node pintu keluar
         StackPane exitNode = createExitNode();
         
-        // Hapus cell kosong yang ada di posisi exit
         getChildren().removeIf(node -> {
             Integer colIndex = GridPane.getColumnIndex(node);
             Integer rowIndex = GridPane.getRowIndex(node);
@@ -132,7 +127,6 @@ public class BoardPane extends GridPane {
                 colIndex == exitCol && rowIndex == exitRow;
         });
         
-        // Tampilkan node pintu keluar
         add(exitNode, exitCol, exitRow);
         System.out.println("Placed EXIT door at row=" + exitRow + ", col=" + exitCol);
         
@@ -144,8 +138,7 @@ public class BoardPane extends GridPane {
         Rectangle exitRect = new Rectangle(cellSize, cellSize);
         exitRect.getStyleClass().add("exit-door");
         
-        // Ubah warna exit agar lebih mencolok
-        exitRect.setFill(Color.web("#FF5722")); // Warna oranye yang lebih mencolok
+        exitRect.setFill(Color.web("#FF5722")); 
         exitRect.setStroke(Color.web("#BF360C"));
         exitRect.setStrokeWidth(2);
         exitRect.setArcWidth(10);

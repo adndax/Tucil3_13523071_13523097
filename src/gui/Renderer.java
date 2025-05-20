@@ -77,7 +77,6 @@ public class Renderer {
             
             System.out.println("Loading board with dimensions: " + rows + "x" + cols);
             
-            // Skip baris kedua yang berisi jumlah piece
             String secondLine = reader.readLine();
             boolean isNumericLine = true;
             
@@ -87,19 +86,16 @@ public class Renderer {
                 isNumericLine = false;
             }
             
-            // --- Ambil baris board, deteksi jika ada baris K di atas grid utama ---
             List<String> boardLines = new ArrayList<>();
             String line;
             int leftPadding = 0;
             boolean hasLeftK = false;
-            boolean hasTopK = false; // Flag untuk K di baris pertama
+            boolean hasTopK = false;
             boolean exitExists = false;
             int exitRow = -1, exitCol = -1;
-            int kCount = 0; // Counter untuk jumlah K (pintu keluar)
+            int kCount = 0; 
 
-            // baris kedua sudah dicek, langsung lanjut baca
             while ((line = reader.readLine()) != null) {
-                // Hitung jumlah K
                 for (int i = 0; i < line.length(); i++) {
                     if (line.charAt(i) == 'K') {
                         kCount++;
@@ -107,26 +103,22 @@ public class Renderer {
                 }
                 
                 String trimmed = line.trim();
-                // Deteksi baris K di atas grid: hanya K atau hanya spasi+K
                 if (boardLines.isEmpty() && (trimmed.equals("K") || (trimmed.length() > 1 && trimmed.replace("K", "").trim().isEmpty()))) {
                     hasTopK = true;
                     exitCol = line.indexOf('K');
                     System.out.println("K found in top row at col: " + exitCol);
-                    continue; // SKIP baris ini, jangan masukin ke boardLines
+                    continue;
                 }
                 boardLines.add(line);
-                // Stop jika sudah cukup baris grid
                 if (boardLines.size() >= rows) break;
             }
             
-            // Validasi jumlah pintu keluar K
             if (kCount == 0) {
                 throw new IllegalArgumentException("Error: No exit (K) found in the puzzle.");
             } else if (kCount > 1) {
                 throw new IllegalArgumentException("Error: Multiple exits (K) found. Only one exit is allowed.");
             }
             
-            // Cari minimum padding kiri di semua baris
             int minLeadingSpace = Integer.MAX_VALUE;
             for (String boardLine : boardLines) {
                 if (boardLine.trim().isEmpty()) continue;
@@ -138,13 +130,11 @@ public class Renderer {
             
             System.out.println("Minimum leading spaces: " + leftPadding);
             
-            // Mencari primary piece dan orientasinya
             boolean foundPrimaryPiece = false;
             boolean isHorizontal = false;
             int pRow = -1, pCol = -1;
-            int pCount = 0; // Counter untuk primary piece (P)
+            int pCount = 0; 
             
-            // Hitung jumlah P dan temukan posisinya
             for (int i = 0; i < boardLines.size(); i++) {
                 String currentLine = boardLines.get(i);
                 for (int j = 0; j < currentLine.length(); j++) {
@@ -159,16 +149,13 @@ public class Renderer {
                 }
             }
             
-            // Validasi keberadaan primary piece
             if (pCount == 0) {
                 throw new IllegalArgumentException("Error: No primary piece (P) found in the puzzle.");
             }
             
-            // TAHAP 0: Periksa K di baris pertama (SEBELUM grid normal) - baru
             if (boardLines.size() > 0) {
                 String firstLine = boardLines.get(0);
                 if (firstLine.contains("K") && firstLine.indexOf('K') <= firstLine.length() - 1) {
-                    // K di baris pertama
                     exitExists = true;
                     exitRow = 0;
                     exitCol = firstLine.indexOf('K') - leftPadding;
@@ -177,7 +164,6 @@ public class Renderer {
                 }
             }
             
-            // TAHAP 1: Periksa K di awal baris (dengan spasi awal)
             if (!exitExists) {
                 for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
                     String currentLine = boardLines.get(i);
@@ -185,15 +171,12 @@ public class Renderer {
                         exitExists = true;
                         exitRow = i;
                         
-                        // Hitung posisi K relatif terhadap leftPadding
                         int kPos = currentLine.indexOf('K');
                         if (kPos - leftPadding <= 0) {
-                            // K berada di awal setelah padding
                             exitCol = 0;
                             hasLeftK = true;
                             System.out.println("K found at start of row " + i + " with left padding " + leftPadding);
                         } else {
-                            // K berada di posisi lain
                             exitCol = kPos - leftPadding;
                             System.out.println("K found in row " + i + " at col " + exitCol);
                         }
@@ -202,7 +185,6 @@ public class Renderer {
                 }
             }
             
-            // TAHAP 2: Periksa K di dalam board normal
             if (!exitExists) {
                 for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
                     String currentLine = boardLines.get(i);
@@ -212,7 +194,6 @@ public class Renderer {
                         exitRow = i;
                         exitCol = kIndex - leftPadding;
                         
-                        // Jika K berada di posisi awal setelah padding
                         if (kIndex - leftPadding <= 0) {
                             hasLeftK = true;
                             exitCol = 0;
@@ -224,7 +205,6 @@ public class Renderer {
                 }
             }
             
-            // TAHAP 3: Periksa K di baris tambahan di bawah
             if (!exitExists && boardLines.size() > rows) {
                 for (int i = rows; i < boardLines.size(); i++) {
                     String currentLine = boardLines.get(i);
@@ -245,7 +225,6 @@ public class Renderer {
                 }
             }
             
-            // TAHAP 4: Periksa K di akhir baris (setelah ukuran normal board)
             if (!exitExists) {
                 for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
                     String currentLine = boardLines.get(i);
@@ -262,7 +241,6 @@ public class Renderer {
                 }
             }
             
-            // Cari primary piece (P) dan tentukan orientasinya
             for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
                 String currentLine = boardLines.get(i);
                 if (currentLine.length() <= leftPadding) continue;
@@ -277,29 +255,26 @@ public class Renderer {
                             foundPrimaryPiece = true;
                         }
                         
-                        // Periksa orientasi
                         if (j > leftPadding && currentLine.charAt(j-1) == 'P') isHorizontal = true;
                         if (j < currentLine.length()-1 && currentLine.charAt(j+1) == 'P') isHorizontal = true;
                     }
                 }
             }
             
-            // Periksa orientasi vertikal dari P jika belum terdeteksi horizontal
             if (foundPrimaryPiece && !isHorizontal) {
                 for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
-                    if (i == pRow) continue; // Skip baris primary piece
+                    if (i == pRow) continue; 
                     
                     String currentLine = boardLines.get(i);
                     int adjustedCol = pCol + leftPadding;
                     
                     if (adjustedCol < currentLine.length() && currentLine.charAt(adjustedCol) == 'P') {
-                        isHorizontal = false; // Konfirmasi bahwa orientasi vertikal
+                        isHorizontal = false; 
                         break;
                     }
                 }
             }
             
-            // Log posisi piece dan exit yang ditemukan
             System.out.println("Primary piece found at [" + pRow + "," + pCol + "], Orientation: " + 
                             (isHorizontal ? "Horizontal" : "Vertical"));
             
@@ -307,15 +282,12 @@ public class Renderer {
                 System.out.println("Exit found at [" + exitRow + "," + exitCol + "]");
                 System.out.println("hasLeftK: " + hasLeftK + ", hasTopK: " + hasTopK);
                 
-                // Validasi orientasi pintu keluar dan primary piece
                 boolean validOrientation = false;
                 if (isHorizontal) {
-                    // Primary piece horizontal -> pintu keluar harus sejajar baris
                     if (exitRow == pRow) {
                         validOrientation = true;
                     }
                 } else {
-                    // Primary piece vertical -> pintu keluar harus sejajar kolom
                     if (exitCol == pCol) {
                         validOrientation = true;
                     }
@@ -329,44 +301,35 @@ public class Renderer {
                     );
                 }
             } else {
-                // Pintu keluar tidak ditemukan, padahal sudah dihitung ada 1 K
-                // Ini seharusnya tidak terjadi karena kita sudah menghitung kCount
                 System.out.println("Warning: Exit exists but not detected in parsing stage.");
             }
             
-            // Hitung dimensi board final
             int finalRows = rows;
             int finalCols = cols;
 
-            // Jika K di baris tambahan di bawah, perluas baris
             if (exitExists && exitRow >= rows) {
                 finalRows = exitRow + 1;
                 System.out.println("Expanding rows for bottom exit: Final rows = " + finalRows);
             }
 
-            // Jika K di akhir kolom, perluas kolom
             if (exitExists && exitCol >= cols) {
                 finalCols = exitCol + 1;
                 System.out.println("Expanding cols for right exit: Final cols = " + finalCols);
             }
 
-            // Jika K di awal kolom (kolom 0), tambahkan kolom di kiri
             if (hasLeftK) {
                 finalCols += 1;
                 System.out.println("Adding column for left K: Final cols = " + finalCols);
             }
 
-            // Jika tidak ada exit, tambahkan sesuai orientasi mobil
             if (!exitExists && foundPrimaryPiece) {
                 if (isHorizontal) {
-                    // Tambahkan exit di kanan untuk horizontal
                     exitRow = pRow;
                     exitCol = cols;
                     finalCols += 1;
                     exitExists = true;
                     System.out.println("Added automatic exit for horizontal at [" + exitRow + "," + exitCol + "]");
                 } else {
-                    // Tambahkan exit di bawah untuk vertikal
                     exitRow = rows;
                     exitCol = pCol;
                     finalRows += 1;
@@ -375,89 +338,72 @@ public class Renderer {
                 }
             }
 
-            // Buat board dengan dimensi final
             currentBoard = new char[finalRows][finalCols];
 
-            // Isi dengan '.' dan perlakukan kasus hasTopK secara khusus
             if (hasTopK) {
-                // Isi semua dengan '.' dulu
                 for (int i = 0; i < finalRows; i++) {
                     for (int j = 0; j < finalCols; j++) {
                         currentBoard[i][j] = '.';
                     }
                 }
                 
-                // Letakkan K di baris 0 pada kolom exitCol
                 int adjustedExitCol = exitCol;
-                if (hasLeftK) adjustedExitCol += 1; // Adjusting for hasLeftK
+                if (hasLeftK) adjustedExitCol += 1; 
                 currentBoard[0][adjustedExitCol] = 'K';
                 System.out.println("Placed K at top row [0," + adjustedExitCol + "]");
                 
-                // Salin konten boardLines ke board, dimulai dari baris 1
                 for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
                     String currentLine = boardLines.get(i);
                     if (currentLine.length() <= leftPadding) continue;
                     
                     for (int j = leftPadding; j < currentLine.length(); j++) {
                         char c = currentLine.charAt(j);
-                        if (c == ' ' || c == 'K') continue; // Skip spasi dan K
+                        if (c == ' ' || c == 'K') continue; 
                         
-                        // Hitung posisi kolom pada board
                         int destCol = j - leftPadding;
                         
-                        // Pastikan koordinat valid untuk baris i+1 (karena baris 0 untuk K)
                         if (i+1 < finalRows && destCol >= 0 && destCol < finalCols) {
                             currentBoard[i+1][destCol] = c;
                         }
                     }
                 }
             } else {
-                // Untuk kasus non-hasTopK, gunakan kode yang sudah ada
-                // Isi dengan '.'
                 for (int i = 0; i < finalRows; i++) {
                     for (int j = 0; j < finalCols; j++) {
                         currentBoard[i][j] = '.';
                     }
                 }
                 
-                // Salin konten dari input ke board
                 for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
                     String currentLine = boardLines.get(i);
                     if (currentLine.length() <= leftPadding) continue;
                     
                     for (int j = leftPadding; j < currentLine.length(); j++) {
                         char c = currentLine.charAt(j);
-                        if (c == ' ') continue; // Skip spasi
+                        if (c == ' ') continue; 
                         
-                        // Hitung posisi kolom pada board
                         int destCol = j - leftPadding;
                         
-                        // Khusus untuk K di kolom pertama
                         if (c == 'K' && hasLeftK && j - leftPadding <= 0) {
-                            destCol = 0;  // K di kolom 0
+                            destCol = 0;
                         }
                         
-                        // Pastikan koordinat valid
                         if (i >= 0 && i < finalRows && destCol >= 0 && destCol < finalCols) {
                             currentBoard[i][destCol] = c;
                         }
                     }
                 }
                 
-                // Tambahkan K untuk kasus khusus non-hasTopK
                 if (exitExists) {
-                    // Untuk K di kolom pertama
                     if (hasLeftK) {
                         currentBoard[exitRow][0] = 'K';
                         System.out.println("Placed K at left [" + exitRow + ",0]");
                     }
                     
-                    // Untuk K di baris tambahan di bawah
                     if (exitRow >= rows) {
                         int adjustedExitCol = exitCol;
                         if (hasLeftK) adjustedExitCol += 1;
                         
-                        // Jika P vertikal, sejajarkan K dengan kolom P
                         if (!isHorizontal && foundPrimaryPiece) {
                             adjustedExitCol = pCol + (hasLeftK ? 1 : 0);
                         }
@@ -468,7 +414,6 @@ public class Renderer {
                         }
                     }
                     
-                    // Untuk K di akhir kolom
                     if (exitCol >= cols && !hasLeftK) {
                         int adjustedExitCol = finalCols - 1;
                         
@@ -480,14 +425,12 @@ public class Renderer {
                 }
             }
 
-            // Verifikasi final: pastikan P dan K ada di board dan sesuai orientasi
             boolean finalFoundP = false;
             boolean finalFoundK = false;
             boolean finalIsHorizontal = false;
             int finalPRow = -1, finalPCol = -1;
             int finalKRow = -1, finalKCol = -1;
             
-            // Periksa board final
             for (int i = 0; i < currentBoard.length; i++) {
                 for (int j = 0; j < currentBoard[i].length; j++) {
                     if (currentBoard[i][j] == 'P') {
@@ -497,7 +440,6 @@ public class Renderer {
                             finalPCol = j;
                         }
                         
-                        // Periksa orientasi
                         if (j > 0 && j < currentBoard[i].length && currentBoard[i][j-1] == 'P') finalIsHorizontal = true;
                         if (j < currentBoard[i].length-1 && currentBoard[i][j+1] == 'P') finalIsHorizontal = true;
                     }
@@ -509,7 +451,6 @@ public class Renderer {
                 }
             }
             
-            // Validasi final
             if (!finalFoundP) {
                 throw new IllegalArgumentException("Error: Primary piece (P) missing from final board.");
             }
@@ -517,7 +458,6 @@ public class Renderer {
                 throw new IllegalArgumentException("Error: Exit door (K) missing from final board.");
             }
             
-            // Verifikasi orientasi lagi
             boolean finalValidOrientation = false;
             if (finalIsHorizontal) {
                 if (finalKRow == finalPRow) finalValidOrientation = true;
@@ -531,13 +471,11 @@ public class Renderer {
                 );
             }
 
-            // Debug board setelah dimodifikasi
             System.out.println("Final board contents (" + finalRows + "x" + finalCols + "):");
             for (int i = 0; i < currentBoard.length; i++) {
                 System.out.println(new String(currentBoard[i]));
             }
                         
-            // Inisialisasi board pada GUI
             boardPane.updateBoard(currentBoard);
             
             solutionSteps.clear();
@@ -552,12 +490,10 @@ public class Renderer {
             e.printStackTrace();
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
-            // Display a dialog or alert to the user
             showErrorDialog("Puzzle Error", e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
             System.err.println("Error loading puzzle file: " + e.getMessage());
-            // Display a dialog or alert to the user
             showErrorDialog("Puzzle Error", "Unexpected error: " + e.getMessage());
             e.printStackTrace();
         } finally {
@@ -575,18 +511,15 @@ public class Renderer {
         System.err.println("[ERROR DIALOG] " + title + ": " + message);
         
         javafx.application.Platform.runLater(() -> {
-            // Buat custom dialog
             javafx.stage.Stage dialogStage = new javafx.stage.Stage();
             dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             dialogStage.setTitle(title);
             dialogStage.setResizable(false);
             
-            // Gunakan warna tema #fbb2a2
-            String primaryColor = "#fbb2a2"; // Warna utama sesuai permintaan
-            String textColor = "#5a3e36";    // Warna teks yang kontras dengan primaryColor
-            String bgColor = "#ffffff";      // Warna latar belakang (sedikit lebih terang)
+            String primaryColor = "#fbb2a2"; 
+            String textColor = "#5a3e36";   
+            String bgColor = "#ffffff"; 
             
-            // Container utama
             javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(15);
             root.setPadding(new javafx.geometry.Insets(20));
             root.setAlignment(javafx.geometry.Pos.CENTER);
@@ -595,17 +528,14 @@ public class Renderer {
                         "-fx-border-width: 2px; " +
                         "-fx-border-radius: 5px;");
             
-            // Header dengan icon sederhana
             javafx.scene.text.Text titleText = new javafx.scene.text.Text(title);
             titleText.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 16));
             titleText.setFill(javafx.scene.paint.Color.web(textColor));
             
-            // Container untuk judul dan icon
             javafx.scene.layout.HBox titleBox = new javafx.scene.layout.HBox(10);
             titleBox.setAlignment(javafx.geometry.Pos.CENTER);
             titleBox.setPadding(new javafx.geometry.Insets(0, 0, 5, 0));
             
-            // Icon sederhana (lingkaran dengan tanda seru)
             javafx.scene.layout.StackPane iconPane = new javafx.scene.layout.StackPane();
             javafx.scene.shape.Circle circle = new javafx.scene.shape.Circle(12);
             circle.setFill(javafx.scene.paint.Color.web(primaryColor));
@@ -617,21 +547,18 @@ public class Renderer {
             iconPane.getChildren().addAll(circle, icon);
             titleBox.getChildren().addAll(iconPane, titleText);
             
-            // Separator
             javafx.scene.shape.Line separator = new javafx.scene.shape.Line();
             separator.setStartX(0);
             separator.setEndX(280);
             separator.setStroke(javafx.scene.paint.Color.web(primaryColor));
             separator.setStrokeWidth(1);
             
-            // Message
             javafx.scene.text.Text messageText = new javafx.scene.text.Text(message);
             messageText.setFont(javafx.scene.text.Font.font("Arial", 14));
             messageText.setFill(javafx.scene.paint.Color.web(textColor));
             messageText.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
             messageText.setWrappingWidth(280);
             
-            // Button OK
             javafx.scene.control.Button okButton = new javafx.scene.control.Button("OK");
             okButton.setPrefSize(80, 30);
             okButton.setStyle("-fx-background-color: " + primaryColor + "; " +
@@ -640,7 +567,6 @@ public class Renderer {
                             "-fx-font-size: 14px; " +
                             "-fx-background-radius: 4px;");
             
-            // Efek hover sederhana
             okButton.setOnMouseEntered(e -> 
                 okButton.setStyle("-fx-background-color: #faa18d; " + // Sedikit lebih terang
                                 "-fx-text-fill: white; " +
@@ -659,23 +585,18 @@ public class Renderer {
             
             okButton.setOnAction(e -> dialogStage.close());
             
-            // Tambahkan semua komponen ke container
             root.getChildren().addAll(titleBox, separator, messageText, okButton);
             
-            // Set scene
             javafx.scene.Scene dialogScene = new javafx.scene.Scene(root, 320, 180);
             dialogStage.setScene(dialogScene);
             
-            // Tambahkan sedikit bayangan
             root.setEffect(new javafx.scene.effect.DropShadow(5, javafx.scene.paint.Color.rgb(0, 0, 0, 0.2)));
             
-            // Animasi fade in sederhana
             javafx.animation.FadeTransition fadeIn = new javafx.animation.FadeTransition(javafx.util.Duration.millis(100), root);
             fadeIn.setFromValue(0.0);
             fadeIn.setToValue(1.0);
             dialogStage.setOnShown(e -> fadeIn.play());
             
-            // Tampilkan dialog
             dialogStage.showAndWait();
         });
     }
@@ -684,27 +605,21 @@ public class Renderer {
         System.out.println("Start solving puzzle with algorithm: " + algorithm + 
                         ", heuristic: " + (heuristic != null ? heuristic : "N/A"));
         try {
-            // Debug board sebelum membuat file
             debugBoard(currentBoard);
             
-            // Buat file temporary untuk konfigurasi board
             File tempFile = File.createTempFile("rushHourBoard", ".txt");
             tempFile.deleteOnExit();
             
             try (FileWriter writer = new FileWriter(tempFile)) {
-                // Tulis dimensi board
                 writer.write(currentBoard.length + " " + currentBoard[0].length + "\n");
                 
-                // Hitung jumlah kendaraan selain P
                 int numNonPrimaryPieces = countNonPrimaryPieces();
                 writer.write(numNonPrimaryPieces + "\n");
                 
-                // Tulis konfigurasi board DENGAN K yang sudah ditetapkan
                 for (int i = 0; i < currentBoard.length; i++) {
                     writer.write(new String(currentBoard[i]) + "\n");
                 }
                 
-                // Tambahkan algoritma dan heuristik ke file
                 writer.write(algorithm + "\n");
                 if (!"dijkstra".equals(algorithm.toLowerCase()) && 
                     !"ucs".equals(algorithm.toLowerCase()) && 
@@ -715,17 +630,13 @@ public class Renderer {
             
             System.out.println("Temporary file created: " + tempFile.getAbsolutePath());
             
-            // Debug file yang dibuat
             debugReadFile(tempFile);
             
-            // Load board untuk algoritma
             Board coreBoard = new Board(tempFile.getAbsolutePath());
             System.out.println("Core board loaded");
             
-            // Debug: cetak board setelah dimuat
             coreBoard.printBoard(null);
             
-            // Jalankan algoritma sesuai pilihan
             GameState solution = null;
             String algorithmLower = algorithm.toLowerCase().trim();
             
@@ -748,7 +659,7 @@ public class Renderer {
 
             } else if ("ucs".equals(algorithmLower)) {
                 System.out.println("Using UCS algorithm");
-                UCS ucs = new UCS(); // FIX: gunakan UCS, bukan Dijkstra
+                UCS ucs = new UCS(); 
                 solution = ucs.solve(coreBoard);
                 nodesVisited = ucs.getNodesVisited();
                 executionTime = (long) ucs.getExecutionTime();
@@ -762,7 +673,6 @@ public class Renderer {
                 executionTime = (long) gbfs.getExecutionTime();
 
             } else {
-                // Fallback
                 System.out.println("Unknown algorithm: " + algorithmLower + ". Using A* as fallback");
                 AStar astarFallback = new AStar("manhattan");
                 solution = astarFallback.solve(coreBoard);
@@ -772,7 +682,6 @@ public class Renderer {
             
             if (solution != null) {
                 System.out.println("Solution found with " + solution.getMoves().size() + " moves!");
-                // Konversi solusi ke format GUI
                 processAlgorithmSolution(solution);
                 return true;
             } else {
@@ -793,7 +702,6 @@ public class Renderer {
             System.out.println(new String(board[i]));
         }
         
-        // Cek primary piece dan exit
         boolean foundP = false;
         boolean foundK = false;
         int pRow = -1, pCol = -1;
@@ -808,7 +716,6 @@ public class Renderer {
                         pRow = i;
                         pCol = j;
                     }
-                    // Cek orientasi
                     if (j > 0 && j < board[i].length && board[i][j-1] == 'P') isHorizontal = true;
                     if (j < board[i].length-1 && board[i][j+1] == 'P') isHorizontal = true;
                 }
@@ -824,7 +731,6 @@ public class Renderer {
         System.out.println("Primary piece orientation: " + (isHorizontal ? "Horizontal" : "Vertical"));
         System.out.println("Exit (K): " + (foundK ? "Found at [" + kRow + "," + kCol + "]" : "NOT FOUND!"));
         
-        // Verifikasi kesesuaian orientasi dan posisi exit
         if (foundP && foundK) {
             boolean validExit = false;
             if (isHorizontal && kRow == pRow) validExit = true;
@@ -863,14 +769,11 @@ public class Renderer {
     private void processAlgorithmSolution(GameState solution) {
         System.out.println("Processing solution with " + solution.getMoves().size() + " moves");
         
-        // Reset solution steps
         solutionSteps.clear();
         currentStepIndex = -1;
         
-        // Add initial state
         solutionSteps.add(new MoveStep(copyBoard(currentBoard), null, null, 0));
         
-        // Current board state that will be updated with each move
         char[][] boardState = copyBoard(currentBoard);
         List<Move> moves = solution.getMoves();
         
@@ -878,27 +781,22 @@ public class Renderer {
             Move move = moves.get(i);
             char piece = move.getPieceId();
             String direction = convertDirectionToGui(move.getDirection());
-            int steps = 1; // Default to 1 step
+            int steps = 1; 
             
-            // Try to get steps if available
             try {
                 java.lang.reflect.Method getStepsMethod = move.getClass().getMethod("getSteps");
                 steps = (int) getStepsMethod.invoke(move);
             } catch (Exception e) {
-                // Ignore if getSteps method is not available
                 steps = 1;
             }
             
             System.out.println("Move " + (i+1) + ": " + piece + " " + direction + " " + steps);
             
-            // Apply move to current board state
             char[][] newBoardState = copyBoard(boardState);
             applyMoveToBoard(newBoardState, piece, direction, steps);
             
-            // Add to solution steps with current piece and move info
             solutionSteps.add(new MoveStep(newBoardState, piece, direction, steps, i + 1));
             
-            // Update board state for next move
             boardState = newBoardState;
         }
         
@@ -906,7 +804,6 @@ public class Renderer {
     }
     
     private void applyMoveToBoard(char[][] board, char piece, String direction, int steps) {
-        // Identify all cells containing the piece
         List<int[]> pieceCells = new ArrayList<>();
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[0].length; col++) {
@@ -918,7 +815,6 @@ public class Renderer {
         
         if (pieceCells.isEmpty()) return;
         
-        // Determine if piece is horizontal (all cells have same row) or vertical
         boolean isHorizontal = true;
         int firstRow = pieceCells.get(0)[0];
         for (int[] cell : pieceCells) {
@@ -928,7 +824,6 @@ public class Renderer {
             }
         }
         
-        // Find min and max coordinates (top-left and bottom-right)
         int minRow = Integer.MAX_VALUE, minCol = Integer.MAX_VALUE;
         int maxRow = Integer.MIN_VALUE, maxCol = Integer.MIN_VALUE;
         
@@ -939,30 +834,27 @@ public class Renderer {
             maxCol = Math.max(maxCol, cell[1]);
         }
         
-        // Clear current piece positions
         for (int[] cell : pieceCells) {
             board[cell[0]][cell[1]] = '.';
         }
         
-        // Calculate new position based on direction and steps
         int newMinRow = minRow;
         int newMinCol = minCol;
         
         if (isHorizontal) {
             if (direction.equals("left")) {
-                newMinCol = minCol - steps; // Move left by steps
+                newMinCol = minCol - steps; 
             } else if (direction.equals("right")) {
-                newMinCol = minCol + steps; // Move right by steps
+                newMinCol = minCol + steps; 
             }
-        } else { // vertical
+        } else { 
             if (direction.equals("up")) {
-                newMinRow = minRow - steps; // Move up by steps
+                newMinRow = minRow - steps; 
             } else if (direction.equals("down")) {
-                newMinRow = minRow + steps; // Move down by steps
+                newMinRow = minRow + steps; 
             }
         }
         
-        // Place piece at new position
         int pieceHeight = maxRow - minRow + 1;
         int pieceWidth = maxCol - minCol + 1;
         
@@ -977,7 +869,6 @@ public class Renderer {
     }
 
     private void displayMove(MoveStep step) {
-        // Hanya update board dengan board state yang baru
         boardPane.updateBoard(step.board);
         
     }
@@ -1029,7 +920,6 @@ public class Renderer {
         }
     }
     
-    // Updating MoveStep class to include steps
     public class MoveStep {
         char[][] board;
         Character piece;
