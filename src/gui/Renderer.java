@@ -110,7 +110,6 @@ public class Renderer {
                     continue;
                 }
                 boardLines.add(line);
-                if (boardLines.size() >= rows) break;
             }
             
             if (kCount == 0) {
@@ -206,20 +205,33 @@ public class Renderer {
             }
             
             if (!exitExists && boardLines.size() > rows) {
+
                 for (int i = rows; i < boardLines.size(); i++) {
                     String currentLine = boardLines.get(i);
+                    String trimmed = currentLine.trim();
+                    if (trimmed.contains("K")) {
+                        exitExists = true;
+                        exitRow = rows;
+                        
+                        if (!isHorizontal && foundPrimaryPiece) {
+                            exitCol = pCol;
+                        } else {
+                            exitCol = currentLine.indexOf('K') - leftPadding;
+                            if (exitCol < 0) exitCol = 0;
+                        }
+                        
+                        System.out.println("Found K in line " + i + " (after board rows) at position [" + exitRow + "," + exitCol + "]");
+                        break;
+                    }
+                    
                     int kIndex = currentLine.indexOf('K');
                     if (kIndex != -1) {
                         exitExists = true;
-                        exitRow = i;
+                        exitRow = rows;
                         exitCol = kIndex - leftPadding;
+                        if (exitCol < 0) exitCol = 0;
                         
-                        if (kIndex - leftPadding <= 0) {
-                            exitCol = 0;
-                            hasLeftK = true;
-                        }
-                        
-                        System.out.println("K found in additional line " + i + " at col " + exitCol);
+                        System.out.println("Found K character in line after board at col " + exitCol);
                         break;
                     }
                 }
