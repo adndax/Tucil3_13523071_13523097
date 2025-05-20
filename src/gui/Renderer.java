@@ -95,9 +95,17 @@ public class Renderer {
             boolean hasTopK = false; // Flag untuk K di baris pertama
             boolean exitExists = false;
             int exitRow = -1, exitCol = -1;
+            int kCount = 0; // Counter untuk jumlah K (pintu keluar)
 
             // baris kedua sudah dicek, langsung lanjut baca
             while ((line = reader.readLine()) != null) {
+                // Hitung jumlah K
+                for (int i = 0; i < line.length(); i++) {
+                    if (line.charAt(i) == 'K') {
+                        kCount++;
+                    }
+                }
+                
                 String trimmed = line.trim();
                 // Deteksi baris K di atas grid: hanya K atau hanya spasi+K
                 if (boardLines.isEmpty() && (trimmed.equals("K") || (trimmed.length() > 1 && trimmed.replace("K", "").trim().isEmpty()))) {
@@ -109,6 +117,13 @@ public class Renderer {
                 boardLines.add(line);
                 // Stop jika sudah cukup baris grid
                 if (boardLines.size() >= rows) break;
+            }
+            
+            // Validasi jumlah pintu keluar K
+            if (kCount == 0) {
+                throw new IllegalArgumentException("Error: No exit (K) found in the puzzle.");
+            } else if (kCount > 1) {
+                throw new IllegalArgumentException("Error: Multiple exits (K) found. Only one exit is allowed.");
             }
             
             // Cari minimum padding kiri di semua baris
@@ -127,6 +142,27 @@ public class Renderer {
             boolean foundPrimaryPiece = false;
             boolean isHorizontal = false;
             int pRow = -1, pCol = -1;
+            int pCount = 0; // Counter untuk primary piece (P)
+            
+            // Hitung jumlah P dan temukan posisinya
+            for (int i = 0; i < boardLines.size(); i++) {
+                String currentLine = boardLines.get(i);
+                for (int j = 0; j < currentLine.length(); j++) {
+                    if (j < currentLine.length() && currentLine.charAt(j) == 'P') {
+                        pCount++;
+                        if (!foundPrimaryPiece) {
+                            pRow = i;
+                            pCol = j - leftPadding;
+                            foundPrimaryPiece = true;
+                        }
+                    }
+                }
+            }
+            
+            // Validasi keberadaan primary piece
+            if (pCount == 0) {
+                throw new IllegalArgumentException("Error: No primary piece (P) found in the puzzle.");
+            }
             
             // TAHAP 0: Periksa K di baris pertama (SEBELUM grid normal) - baru
             if (boardLines.size() > 0) {
@@ -270,8 +306,32 @@ public class Renderer {
             if (exitExists) {
                 System.out.println("Exit found at [" + exitRow + "," + exitCol + "]");
                 System.out.println("hasLeftK: " + hasLeftK + ", hasTopK: " + hasTopK);
+                
+                // Validasi orientasi pintu keluar dan primary piece
+                boolean validOrientation = false;
+                if (isHorizontal) {
+                    // Primary piece horizontal -> pintu keluar harus sejajar baris
+                    if (exitRow == pRow) {
+                        validOrientation = true;
+                    }
+                } else {
+                    // Primary piece vertical -> pintu keluar harus sejajar kolom
+                    if (exitCol == pCol) {
+                        validOrientation = true;
+                    }
+                }
+                
+                if (!validOrientation) {
+                    throw new IllegalArgumentException(
+                        "Error: Exit door (K) is not aligned with primary piece (P). " +
+                        "For horizontal primary pieces, exit must be in the same row. " +
+                        "For vertical primary pieces, exit must be in the same column."
+                    );
+                }
             } else {
-                System.out.println("No exit found, will add one automatically");
+                // Pintu keluar tidak ditemukan, padahal sudah dihitung ada 1 K
+                // Ini seharusnya tidak terjadi karena kita sudah menghitung kCount
+                System.out.println("Warning: Exit exists but not detected in parsing stage.");
             }
             
             // Hitung dimensi board final
@@ -420,6 +480,57 @@ public class Renderer {
                 }
             }
 
+            // Verifikasi final: pastikan P dan K ada di board dan sesuai orientasi
+            boolean finalFoundP = false;
+            boolean finalFoundK = false;
+            boolean finalIsHorizontal = false;
+            int finalPRow = -1, finalPCol = -1;
+            int finalKRow = -1, finalKCol = -1;
+            
+            // Periksa board final
+            for (int i = 0; i < currentBoard.length; i++) {
+                for (int j = 0; j < currentBoard[i].length; j++) {
+                    if (currentBoard[i][j] == 'P') {
+                        finalFoundP = true;
+                        if (finalPRow == -1) {
+                            finalPRow = i;
+                            finalPCol = j;
+                        }
+                        
+                        // Periksa orientasi
+                        if (j > 0 && j < currentBoard[i].length && currentBoard[i][j-1] == 'P') finalIsHorizontal = true;
+                        if (j < currentBoard[i].length-1 && currentBoard[i][j+1] == 'P') finalIsHorizontal = true;
+                    }
+                    if (currentBoard[i][j] == 'K') {
+                        finalFoundK = true;
+                        finalKRow = i;
+                        finalKCol = j;
+                    }
+                }
+            }
+            
+            // Validasi final
+            if (!finalFoundP) {
+                throw new IllegalArgumentException("Error: Primary piece (P) missing from final board.");
+            }
+            if (!finalFoundK) {
+                throw new IllegalArgumentException("Error: Exit door (K) missing from final board.");
+            }
+            
+            // Verifikasi orientasi lagi
+            boolean finalValidOrientation = false;
+            if (finalIsHorizontal) {
+                if (finalKRow == finalPRow) finalValidOrientation = true;
+            } else {
+                if (finalKCol == finalPCol) finalValidOrientation = true;
+            }
+            
+            if (!finalValidOrientation) {
+                throw new IllegalArgumentException(
+                    "Error: In final board, exit door (K) is not aligned with primary piece (P)."
+                );
+            }
+
             // Debug board setelah dimodifikasi
             System.out.println("Final board contents (" + finalRows + "x" + finalCols + "):");
             for (int i = 0; i < currentBoard.length; i++) {
@@ -439,8 +550,15 @@ public class Renderer {
         } catch (IOException e) {
             System.err.println("Error loading puzzle file: " + e.getMessage());
             e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+            // Display a dialog or alert to the user
+            showErrorDialog("Puzzle Error", e.getMessage());
+            e.printStackTrace();
         } catch (Exception e) {
             System.err.println("Error loading puzzle file: " + e.getMessage());
+            // Display a dialog or alert to the user
+            showErrorDialog("Puzzle Error", "Unexpected error: " + e.getMessage());
             e.printStackTrace();
         } finally {
             if (reader != null) {
@@ -451,6 +569,116 @@ public class Renderer {
                 }
             }
         }
+    }
+
+    private void showErrorDialog(String title, String message) {
+        System.err.println("[ERROR DIALOG] " + title + ": " + message);
+        
+        javafx.application.Platform.runLater(() -> {
+            // Buat custom dialog
+            javafx.stage.Stage dialogStage = new javafx.stage.Stage();
+            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialogStage.setTitle(title);
+            dialogStage.setResizable(false);
+            
+            // Gunakan warna tema #fbb2a2
+            String primaryColor = "#fbb2a2"; // Warna utama sesuai permintaan
+            String textColor = "#5a3e36";    // Warna teks yang kontras dengan primaryColor
+            String bgColor = "#fef8f6";      // Warna latar belakang (sedikit lebih terang)
+            String borderColor = "#946b5e";  // Warna border yang lebih gelap dari primaryColor
+            
+            // Container utama
+            javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(15);
+            root.setPadding(new javafx.geometry.Insets(20));
+            root.setAlignment(javafx.geometry.Pos.CENTER);
+            root.setStyle("-fx-background-color: " + bgColor + "; " +
+                        "-fx-border-color: " + primaryColor + "; " +
+                        "-fx-border-width: 2px; " +
+                        "-fx-border-radius: 5px;");
+            
+            // Header dengan icon sederhana
+            javafx.scene.text.Text titleText = new javafx.scene.text.Text(title);
+            titleText.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 16));
+            titleText.setFill(javafx.scene.paint.Color.web(textColor));
+            
+            // Container untuk judul dan icon
+            javafx.scene.layout.HBox titleBox = new javafx.scene.layout.HBox(10);
+            titleBox.setAlignment(javafx.geometry.Pos.CENTER);
+            titleBox.setPadding(new javafx.geometry.Insets(0, 0, 5, 0));
+            
+            // Icon sederhana (lingkaran dengan tanda seru)
+            javafx.scene.layout.StackPane iconPane = new javafx.scene.layout.StackPane();
+            javafx.scene.shape.Circle circle = new javafx.scene.shape.Circle(12);
+            circle.setFill(javafx.scene.paint.Color.web(primaryColor));
+            
+            javafx.scene.text.Text icon = new javafx.scene.text.Text("!");
+            icon.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 16));
+            icon.setFill(javafx.scene.paint.Color.WHITE);
+            
+            iconPane.getChildren().addAll(circle, icon);
+            titleBox.getChildren().addAll(iconPane, titleText);
+            
+            // Separator
+            javafx.scene.shape.Line separator = new javafx.scene.shape.Line();
+            separator.setStartX(0);
+            separator.setEndX(280);
+            separator.setStroke(javafx.scene.paint.Color.web(primaryColor));
+            separator.setStrokeWidth(1);
+            
+            // Message
+            javafx.scene.text.Text messageText = new javafx.scene.text.Text(message);
+            messageText.setFont(javafx.scene.text.Font.font("Arial", 14));
+            messageText.setFill(javafx.scene.paint.Color.web(textColor));
+            messageText.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+            messageText.setWrappingWidth(280);
+            
+            // Button OK
+            javafx.scene.control.Button okButton = new javafx.scene.control.Button("OK");
+            okButton.setPrefSize(80, 30);
+            okButton.setStyle("-fx-background-color: " + primaryColor + "; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-font-weight: bold; " +
+                            "-fx-font-size: 14px; " +
+                            "-fx-background-radius: 4px;");
+            
+            // Efek hover sederhana
+            okButton.setOnMouseEntered(e -> 
+                okButton.setStyle("-fx-background-color: #faa18d; " + // Sedikit lebih terang
+                                "-fx-text-fill: white; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-font-size: 14px; " +
+                                "-fx-background-radius: 4px;")
+            );
+            
+            okButton.setOnMouseExited(e -> 
+                okButton.setStyle("-fx-background-color: " + primaryColor + "; " +
+                                "-fx-text-fill: white; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-font-size: 14px; " +
+                                "-fx-background-radius: 4px;")
+            );
+            
+            okButton.setOnAction(e -> dialogStage.close());
+            
+            // Tambahkan semua komponen ke container
+            root.getChildren().addAll(titleBox, separator, messageText, okButton);
+            
+            // Set scene
+            javafx.scene.Scene dialogScene = new javafx.scene.Scene(root, 320, 180);
+            dialogStage.setScene(dialogScene);
+            
+            // Tambahkan sedikit bayangan
+            root.setEffect(new javafx.scene.effect.DropShadow(5, javafx.scene.paint.Color.rgb(0, 0, 0, 0.2)));
+            
+            // Animasi fade in sederhana
+            javafx.animation.FadeTransition fadeIn = new javafx.animation.FadeTransition(javafx.util.Duration.millis(100), root);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            dialogStage.setOnShown(e -> fadeIn.play());
+            
+            // Tampilkan dialog
+            dialogStage.showAndWait();
+        });
     }
 
     public boolean solvePuzzle(String algorithm, String heuristic) {
