@@ -4,7 +4,6 @@ import core.Board;
 import core.Piece;
 
 public class Heuristics {
-    // Manhattan distance heuristic - measures linear distance to exit
     public static double manhattanDistance(Board board) {
         Piece primary = board.getPrimaryPiece();
         int exitRow = board.getExitRow();
@@ -13,9 +12,7 @@ public class Heuristics {
         if (primary.isHorizontal()) {
             int pieceEndCol = primary.getCol() + primary.getSize() - 1;
             
-            // Jika pintu keluar di luar grid, sesuaikan perhitungan jarak
             if (exitCol >= board.getCols()) {
-                // Hitung jarak dari ujung kanan mobil ke tepi kanan grid
                 return board.getCols() - 1 - pieceEndCol;
             } else {
                 return Math.abs(pieceEndCol - exitCol);
@@ -23,9 +20,7 @@ public class Heuristics {
         } else {
             int pieceEndRow = primary.getRow() + primary.getSize() - 1;
             
-            // Jika pintu keluar di luar grid, sesuaikan perhitungan jarak
             if (exitRow >= board.getRows()) {
-                // Hitung jarak dari ujung bawah mobil ke tepi bawah grid
                 return board.getRows() - 1 - pieceEndRow;
             } else {
                 return Math.abs(pieceEndRow - exitRow);
@@ -33,7 +28,6 @@ public class Heuristics {
         }
     }
 
-    // Blocking vehicles heuristic - counts the number of blocking vehicles
     public static double blockingVehicles(Board board) {
         Piece primary = board.getPrimaryPiece();
         int exitRow = board.getExitRow();
@@ -41,32 +35,28 @@ public class Heuristics {
         int count = 0;
         
         if (primary.isHorizontal()) {
-            // Count vehicles blocking the horizontal path to exit
             int primaryRow = primary.getRow();
             int primaryEndCol = primary.getCol() + primary.getSize() - 1;
             
-            // Determine direction to exit
             int startCol, endCol;
             
-            if (exitCol >= board.getCols()) { // Pintu keluar di kanan grid
+            if (exitCol >= board.getCols()) { 
                 startCol = primaryEndCol + 1;
-                endCol = board.getCols() - 1; // Hanya hitung sampai batas grid
-            } else if (exitCol < 0) { // Pintu keluar di kiri grid
-                startCol = 0; // Mulai dari batas kiri grid
+                endCol = board.getCols() - 1;
+            } else if (exitCol < 0) { 
+                startCol = 0; 
                 endCol = primary.getCol() - 1;
-            } else if (exitCol > primaryEndCol) { // Pintu keluar di kanan mobil utama
+            } else if (exitCol > primaryEndCol) { 
                 startCol = primaryEndCol + 1;
-                endCol = exitCol - 1; // -1 karena kita tidak memeriksa sel pintu keluar
-            } else { // Pintu keluar di kiri mobil utama
-                startCol = exitCol + 1; // +1 karena kita tidak memeriksa sel pintu keluar
+                endCol = exitCol - 1; 
+            } else { 
+                startCol = exitCol + 1; 
                 endCol = primary.getCol() - 1;
             }
             
-            // Validasi batas
             startCol = Math.max(0, startCol);
             endCol = Math.min(board.getCols() - 1, endCol);
             
-            // Check for blocking vehicles
             for (int col = startCol; col <= endCol; col++) {
                 if (primaryRow >= 0 && primaryRow < board.getRows() && col >= 0 && col < board.getCols()) {
                     char cell = board.getGrid()[primaryRow][col];
@@ -76,32 +66,28 @@ public class Heuristics {
                 }
             }
         } else {
-            // Count vehicles blocking the vertical path to exit
             int primaryCol = primary.getCol();
             int primaryEndRow = primary.getRow() + primary.getSize() - 1;
             
-            // Determine direction to exit
             int startRow, endRow;
             
-            if (exitRow >= board.getRows()) { // Pintu keluar di bawah grid
+            if (exitRow >= board.getRows()) { 
                 startRow = primaryEndRow + 1;
-                endRow = board.getRows() - 1; // Hanya hitung sampai batas grid
-            } else if (exitRow < 0) { // Pintu keluar di atas grid
-                startRow = 0; // Mulai dari batas atas grid
+                endRow = board.getRows() - 1; 
+            } else if (exitRow < 0) { 
+                startRow = 0; 
                 endRow = primary.getRow() - 1;
-            } else if (exitRow > primaryEndRow) { // Pintu keluar di bawah mobil utama
+            } else if (exitRow > primaryEndRow) { 
                 startRow = primaryEndRow + 1;
-                endRow = exitRow - 1; // -1 karena kita tidak memeriksa sel pintu keluar
-            } else { // Pintu keluar di atas mobil utama
-                startRow = exitRow + 1; // +1 karena kita tidak memeriksa sel pintu keluar
+                endRow = exitRow - 1; 
+            } else { 
+                startRow = exitRow + 1; 
                 endRow = primary.getRow() - 1;
             }
             
-            // Validasi batas
             startRow = Math.max(0, startRow);
             endRow = Math.min(board.getRows() - 1, endRow);
             
-            // Check for blocking vehicles
             for (int row = startRow; row <= endRow; row++) {
                 if (row >= 0 && row < board.getRows() && primaryCol >= 0 && primaryCol < board.getCols()) {
                     char cell = board.getGrid()[row][primaryCol];
@@ -115,12 +101,10 @@ public class Heuristics {
         return count;
     }
 
-    // Combined heuristic - uses both Manhattan distance and blocking vehicles
     public static double combined(Board board) {
         return manhattanDistance(board) + 2 * blockingVehicles(board);
     }
     
-    // Get heuristic by name
     public static double getHeuristic(Board board, String heuristicName) {
         switch (heuristicName.toLowerCase()) {
             case "manhattan":
@@ -130,7 +114,7 @@ public class Heuristics {
             case "combined":
                 return combined(board);
             default:
-                return manhattanDistance(board); // Default to Manhattan distance
+                return manhattanDistance(board);
         }
     }
 }

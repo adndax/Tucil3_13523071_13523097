@@ -31,41 +31,33 @@ public class GBFS {
         nodesVisited = 0;
         long startTime = System.nanoTime();
 
-        // Priority queue ordered by heuristic value (h)
         PriorityQueue<Node> openList = new PriorityQueue<>(
             Comparator.comparingDouble(n -> n.state.getH())
         );
         Set<String> closedList = new HashSet<>();
 
-        // Initialize with start state
         GameState initialState = new GameState(initialBoard, heuristicName);
         Node initialNode = new Node(initialState, null);
         openList.add(initialNode);
 
         while (!openList.isEmpty()) {
-            // Get node with lowest heuristic value
             Node currentNode = openList.poll();
             GameState currentState = currentNode.state;
             nodesVisited++;
 
-            // Get unique key for current state
             String currentKey = getBoardKey(currentState.getBoard());
 
-            // Check if goal is reached
             if (currentState.isGoal()) {
                 executionTime = (System.nanoTime() - startTime) / 1_000_000.0; // Convert to milliseconds
                 return currentState;
             }
 
-            // Skip if state has been visited
             if (closedList.contains(currentKey)) {
                 continue;
             }
 
-            // Add to closed list
             closedList.add(currentKey);
 
-            // Generate successors
             for (GameState successor : currentState.getSuccessors()) {
                 String successorKey = getBoardKey(successor.getBoard());
                 if (!closedList.contains(successorKey)) {
@@ -75,14 +67,10 @@ public class GBFS {
             }
         }
 
-        // No solution found
         executionTime = (System.nanoTime() - startTime) / 1_000_000.0;
         return null;
     }
 
-    /**
-     * Creates a unique string key for a board state
-     */
     private String getBoardKey(Board board) {
         StringBuilder key = new StringBuilder();
         char[][] grid = board.getGrid();
@@ -104,11 +92,9 @@ public class GBFS {
         
         List<Move> moves = solution.getMoves();
 
-        // Print initial board
         System.out.println("Papan Awal:");
         initialBoard.printBoard(null);
 
-        // Print each move and resulting board
         Board currentBoard = initialBoard;
         for (int i = 0; i < moves.size(); i++) {
             Move move = moves.get(i);
@@ -122,23 +108,14 @@ public class GBFS {
         System.out.println("Waktu eksekusi: " + executionTime + " ms");
     }
 
-    /**
-     * Gets the number of nodes visited during search
-     */
     public int getNodesVisited() {
         return nodesVisited;
     }
 
-    /**
-     * Gets the execution time in milliseconds
-     */
     public double getExecutionTime() {
         return executionTime;
     }
     
-    /**
-     * Gets the name of the heuristic being used
-     */
     public String getHeuristicName() {
         return heuristicName;
     }
