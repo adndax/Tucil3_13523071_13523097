@@ -10,12 +10,10 @@ public class UCS {
     private static class Node {
         GameState state;
         double cost; // g(n) - number of moves
-        Node parent;
 
         Node(GameState state, double cost, Node parent) {
             this.state = state;
             this.cost = cost;
-            this.parent = parent;
         }
     }
 

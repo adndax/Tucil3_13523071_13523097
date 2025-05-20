@@ -9,11 +9,9 @@ import java.util.*;
 public class GBFS {
     private static class Node {
         GameState state;
-        Node parent;
 
         Node(GameState state, Node parent) {
             this.state = state;
-            this.parent = parent;
         }
     }
 
