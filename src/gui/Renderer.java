@@ -507,7 +507,7 @@ public class Renderer {
         }
     }
 
-    private void showErrorDialog(String title, String message) {
+    public void showErrorDialog(String title, String message) {
         System.err.println("[ERROR DIALOG] " + title + ": " + message);
         
         javafx.application.Platform.runLater(() -> {
