@@ -189,7 +189,6 @@ public class ControlPanel extends VBox {
         String algorithm = getInternalName(algorithmFormal);
         String heuristic = getInternalName(heuristicFormal);
         
-        // PENTING: Hanya kirim heuristik jika bukan "none" dan algoritma membutuhkannya
         if ("none".equals(heuristic) || 
             "dijkstra".equals(algorithm) || 
             "ucs".equals(algorithm)) {
@@ -199,52 +198,47 @@ public class ControlPanel extends VBox {
         System.out.println("Solving puzzle with algorithm: " + algorithm + 
                         ", heuristic: " + (heuristic != null ? heuristic : "N/A"));
         
-        // Disable tombol solve saat proses sedang berjalan
         solveButton.setDisable(true);
         
-        // Tampilkan indicator "Solving..." 
         statsLabel.setText("Solving puzzle...");
-        
-        // Panggil renderer dengan parameter yang benar
-        boolean solved = renderer.solvePuzzle(algorithm, heuristic);
-        
-        if (solved) {
-            prevMoveButton.setDisable(false);
-            nextMoveButton.setDisable(false);
-            playAnimationButton.setDisable(false);
+        try {
+            boolean solved = renderer.solvePuzzle(algorithm, heuristic);
             
-            updateStats(
-                renderer.getTotalMoves(),
-                renderer.getNodesVisited(),
-                renderer.getExecutionTime()
-            );
-            
-            createStateButtons();
-            
-            // TAMBAHAN: Langsung jalankan animasi secara otomatis
-            // Tanpa popup, langsung jalankan animasi dengan delay kecil
-            javafx.application.Platform.runLater(() -> {
-                // Tambahkan delay kecil hanya untuk memastikan UI telah diperbarui
-                new javafx.animation.Timeline(
-                    new javafx.animation.KeyFrame(
-                        javafx.util.Duration.millis(300), // Delay sangat kecil
-                        event -> renderer.playAnimation()
-                    )
-                ).play();
-            });
-        } else {
-            // Re-enable tombol solve
+            if (solved) {
+                prevMoveButton.setDisable(false);
+                nextMoveButton.setDisable(false);
+                playAnimationButton.setDisable(false);
+                
+                updateStats(
+                    renderer.getTotalMoves(),
+                    renderer.getNodesVisited(),
+                    renderer.getExecutionTime()
+                );
+                
+                createStateButtons();
+                
+                javafx.application.Platform.runLater(() -> {
+                    new javafx.animation.Timeline(
+                        new javafx.animation.KeyFrame(
+                            javafx.util.Duration.millis(300),
+                            event -> renderer.playAnimation()
+                        )
+                    ).play();
+                });
+            } else {
+                solveButton.setDisable(false);
+                
+                renderer.showErrorDialog("Solving Result", "No solution found for " + 
+                                    algorithmFormal + 
+                                    (heuristic != null ? " with " + heuristicFormal : ""));
+            }
+        } catch (Exception e) {
             solveButton.setDisable(false);
             
-            // Tampilkan detail error dalam alert
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Solving Result");
-            alert.setHeaderText("No Solution Found");
-            alert.setContentText("The puzzle could not be solved with " + 
-                                algorithmFormal + 
-                                (heuristic != null ? " and " + heuristicFormal : "") + 
-                                ". Check console for details.");
-            alert.showAndWait();
+            renderer.showErrorDialog("Error", "An error occurred: " + e.getMessage());
+            
+            System.err.println("Error during puzzle solving: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
