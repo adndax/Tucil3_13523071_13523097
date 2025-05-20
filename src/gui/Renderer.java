@@ -38,6 +38,9 @@ public class Renderer {
     private List<MoveStep> solutionSteps;
     private int currentStepIndex = -1;
     private Timeline animation;
+
+    private String lastUsedAlgorithm = null;
+    private String lastUsedHeuristic = null;
     
     private int totalMoves = 0;
     private int nodesVisited = 0;
@@ -613,9 +616,105 @@ public class Renderer {
         });
     }
 
+    public void showSuccessDialog(String title, String message) {
+        System.out.println("[SUCCESS DIALOG] " + title + ": " + message);
+        
+        javafx.application.Platform.runLater(() -> {
+            javafx.stage.Stage dialogStage = new javafx.stage.Stage();
+            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialogStage.setTitle(title);
+            dialogStage.setResizable(false);
+            
+            String primaryColor = "#82BF6E"; 
+            String textColor = "#5a3e36";  
+            String bgColor = "#ffffff";
+            
+            javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(15);
+            root.setPadding(new javafx.geometry.Insets(20));
+            root.setAlignment(javafx.geometry.Pos.CENTER);
+            root.setStyle("-fx-background-color: " + bgColor + "; " +
+                        "-fx-border-color: " + primaryColor + "; " +
+                        "-fx-border-width: 2px; " +
+                        "-fx-border-radius: 5px;");
+            
+            javafx.scene.text.Text titleText = new javafx.scene.text.Text(title);
+            titleText.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 16));
+            titleText.setFill(javafx.scene.paint.Color.web(textColor));
+            
+            javafx.scene.layout.HBox titleBox = new javafx.scene.layout.HBox(10);
+            titleBox.setAlignment(javafx.geometry.Pos.CENTER);
+            titleBox.setPadding(new javafx.geometry.Insets(0, 0, 5, 0));
+            
+            javafx.scene.layout.StackPane iconPane = new javafx.scene.layout.StackPane();
+            javafx.scene.shape.Circle circle = new javafx.scene.shape.Circle(12);
+            circle.setFill(javafx.scene.paint.Color.web(primaryColor));
+            
+            javafx.scene.text.Text icon = new javafx.scene.text.Text("✓");
+            icon.setFont(javafx.scene.text.Font.font("Arial", javafx.scene.text.FontWeight.BOLD, 16));
+            icon.setFill(javafx.scene.paint.Color.WHITE);
+            
+            iconPane.getChildren().addAll(circle, icon);
+            titleBox.getChildren().addAll(iconPane, titleText);
+            
+            javafx.scene.shape.Line separator = new javafx.scene.shape.Line();
+            separator.setStartX(0);
+            separator.setEndX(380);  
+            separator.setStroke(javafx.scene.paint.Color.web(primaryColor));
+            separator.setStrokeWidth(1);
+            
+            javafx.scene.text.Text messageText = new javafx.scene.text.Text(message);
+            messageText.setFont(javafx.scene.text.Font.font("Arial", 14));
+            messageText.setFill(javafx.scene.paint.Color.web(textColor));
+            messageText.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+            messageText.setWrappingWidth(380);
+            
+            javafx.scene.control.Button okButton = new javafx.scene.control.Button("OK");
+            okButton.setPrefSize(80, 30);
+            okButton.setStyle("-fx-background-color: " + primaryColor + "; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-font-weight: bold; " +
+                            "-fx-font-size: 14px; " +
+                            "-fx-background-radius: 4px;");
+            
+            okButton.setOnMouseEntered(e -> 
+                okButton.setStyle("-fx-background-color: #95CA83; " + 
+                                "-fx-text-fill: white; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-font-size: 14px; " +
+                                "-fx-background-radius: 4px;")
+            );
+            
+            okButton.setOnMouseExited(e -> 
+                okButton.setStyle("-fx-background-color: " + primaryColor + "; " +
+                                "-fx-text-fill: white; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-font-size: 14px; " +
+                                "-fx-background-radius: 4px;")
+            );
+            
+            okButton.setOnAction(e -> dialogStage.close());
+            
+            root.getChildren().addAll(titleBox, separator, messageText, okButton);
+            
+            javafx.scene.Scene dialogScene = new javafx.scene.Scene(root, 420, 200);
+            dialogStage.setScene(dialogScene);
+            
+            root.setEffect(new javafx.scene.effect.DropShadow(5, javafx.scene.paint.Color.rgb(0, 0, 0, 0.2)));
+            
+            javafx.animation.FadeTransition fadeIn = new javafx.animation.FadeTransition(javafx.util.Duration.millis(100), root);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            dialogStage.setOnShown(e -> fadeIn.play());
+            
+            dialogStage.showAndWait();
+        });
+    }
+
     public boolean solvePuzzle(String algorithm, String heuristic) {
         System.out.println("Start solving puzzle with algorithm: " + algorithm + 
                         ", heuristic: " + (heuristic != null ? heuristic : "N/A"));
+        lastUsedAlgorithm = algorithm;
+        lastUsedHeuristic = heuristic;
         try {
             debugBoard(currentBoard);
             
@@ -961,6 +1060,138 @@ public class Renderer {
         return copy;
     }
     
+    public void saveSolutionToFile(File file) {
+        if (solutionSteps.isEmpty() || solutionSteps.size() <= 1) {
+            showErrorDialog("Save Error", "No solution available to save.");
+            return;
+        }
+
+        try (FileWriter writer = new FileWriter(file)) {
+            // Write header with fancy formatting
+            writer.write("╔══════════════════════════════════════════╗\n");
+            writer.write("║        Rush Hour Puzzle Solution         ║\n");
+            writer.write("╚══════════════════════════════════════════╝\n\n");
+            
+            // Write solution information
+            writer.write("Solution Details:\n");
+            writer.write("----------------\n");
+            writer.write(String.format("Algorithm: %s\n", formatAlgorithmName(lastUsedAlgorithm)));
+            writer.write(String.format("Heuristic: %s\n", formatHeuristicName(lastUsedHeuristic)));
+            writer.write(String.format("Total Moves: %d\n", totalMoves));
+            writer.write(String.format("Nodes Visited: %d\n", nodesVisited));
+            writer.write(String.format("Execution Time: %d ms\n\n", executionTime));
+            
+            // Write initial state
+            writer.write("Initial State:\n");
+            char[][] initialBoard = solutionSteps.get(0).board;
+            writeBoardWithBorder(writer, initialBoard);
+            writer.write("\n");
+            
+            // Write each move
+            for (int i = 1; i < solutionSteps.size(); i++) {
+                MoveStep step = solutionSteps.get(i);
+                String directionName = formatDirectionName(step.direction);
+                
+                writer.write(String.format("Move %d: %s-%s", 
+                    step.moveNumber, 
+                    step.piece, 
+                    directionName));
+                
+                if (step.steps > 1) {
+                    writer.write(String.format(" %d step(s)", step.steps));
+                }
+                writer.write("\n");
+                
+                writeBoardWithBorder(writer, step.board);
+                writer.write("\n");
+            }
+            
+            // Write footer
+            writer.write("End of solution\n");
+            writer.write("Generated on: " + java.time.LocalDateTime.now() + "\n");
+            
+            System.out.println("Solution saved to: " + file.getAbsolutePath());
+            
+            // Show success dialog using the custom dialog instead of Alert
+            javafx.application.Platform.runLater(() -> {
+                showSuccessDialog("Success", "Solution successfully saved to:\n" + file.getAbsolutePath());
+            });
+            
+        } catch (IOException e) {
+            System.err.println("Error saving solution: " + e.getMessage());
+            showErrorDialog("Save Error", "Failed to save solution: " + e.getMessage());
+        }
+    }
+
+    private void writeBoardWithBorder(FileWriter writer, char[][] board) throws IOException {
+        int cols = board[0].length;
+        
+        // Top border
+        writer.write("┌");
+        for (int j = 0; j < cols; j++) {
+            writer.write("─");
+        }
+        writer.write("┐\n");
+        
+        // Board with left and right borders
+        for (int i = 0; i < board.length; i++) {
+            writer.write("│");
+            writer.write(new String(board[i]));
+            writer.write("│\n");
+        }
+        
+        // Bottom border
+        writer.write("└");
+        for (int j = 0; j < cols; j++) {
+            writer.write("─");
+        }
+        writer.write("┘\n");
+    }
+
+    /**
+     * Formats the algorithm name for display
+     */
+    private String formatAlgorithmName(String algorithm) {
+        if (algorithm == null) return "Unknown";
+        
+        switch (algorithm.toLowerCase()) {
+            case "astar": return "A* (A-Star)";
+            case "dijkstra": return "Dijkstra's Algorithm";
+            case "gbfs": return "Greedy Best-First Search";
+            case "ucs": return "Uniform Cost Search";
+            default: return algorithm;
+        }
+    }
+
+    /**
+     * Formats the heuristic name for display
+     */
+    private String formatHeuristicName(String heuristic) {
+        if (heuristic == null) return "None";
+        
+        switch (heuristic.toLowerCase()) {
+            case "manhattan": return "Manhattan Distance";
+            case "blocking": return "Blocking Heuristic";
+            case "combined": return "Combined Heuristic";
+            default: return heuristic;
+        }
+    }
+
+    /**
+     * Formats the direction name for display
+     */
+    private String formatDirectionName(String direction) {
+        if (direction == null) return "Unknown";
+        
+        switch (direction.toLowerCase()) {
+            case "up": return "Up";
+            case "down": return "Down";
+            case "left": return "Left";
+            case "right": return "Right";
+            default: return direction;
+        }
+    }
+
     public int getTotalMoves() {
         return totalMoves;
     }

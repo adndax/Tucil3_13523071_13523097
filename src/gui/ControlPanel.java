@@ -22,6 +22,8 @@ public class ControlPanel extends VBox {
     private FlowPane stateButtonsPane;  
     private Label statsLabel;
     private Renderer renderer;
+    private Button saveSolutionButton;
+    private SaveSolutionHandler saveSolutionHandler;
     
     public ControlPanel(Renderer renderer) {
         this.renderer = renderer;
@@ -30,6 +32,8 @@ public class ControlPanel extends VBox {
         this.getStyleClass().add("control-panel");
         
         VBox.setVgrow(this, Priority.ALWAYS);
+
+        saveSolutionHandler = new SaveSolutionHandler(renderer);
         
         renderer.addStepChangeListener(this::updateStateButtonsFromIndex);
         
@@ -37,6 +41,13 @@ public class ControlPanel extends VBox {
     }
             
     private void setupControls() {
+        saveSolutionButton = new Button("Save Solution");
+        saveSolutionButton.getStyleClass().add("start-button");
+        saveSolutionButton.setId("saveSolutionButton");
+        saveSolutionButton.setMaxWidth(Double.MAX_VALUE);
+        saveSolutionButton.setOnAction(e -> saveSolution());
+        saveSolutionButton.setDisable(true); 
+
         loadFileButton = new Button("Load Puzzle File");
         loadFileButton.getStyleClass().add("start-button");
         loadFileButton.setId("loadFileButton");
@@ -154,6 +165,7 @@ public class ControlPanel extends VBox {
             separator1,
             navigationBox,
             playAnimationButton,
+            saveSolutionHandler.getSaveSolutionButton(),
             separator2,
             statsLabel, 
             separator3,
@@ -167,6 +179,24 @@ public class ControlPanel extends VBox {
         playAnimationButton.setDisable(true);
     }
     
+    private void saveSolution() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Solution");
+        fileChooser.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter("Text Files", "*.txt")
+        );
+        
+        String initialFileName = "rushhour_solution_" + 
+                            java.time.LocalDate.now().toString() + ".txt";
+        fileChooser.setInitialFileName(initialFileName);
+        
+        File selectedFile = fileChooser.showSaveDialog(this.getScene().getWindow());
+        
+        if (selectedFile != null) {
+            renderer.saveSolutionToFile(selectedFile);
+        }
+    }  
+
     private void loadPuzzleFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open Puzzle File");
@@ -179,6 +209,10 @@ public class ControlPanel extends VBox {
         if (selectedFile != null) {
             renderer.loadPuzzleFromFile(selectedFile);
             solveButton.setDisable(false);
+            
+            saveSolutionHandler.setFileLoaded(true);
+            
+            saveSolutionHandler.setPuzzleSolved(false);
         }
     }
 
@@ -209,6 +243,8 @@ public class ControlPanel extends VBox {
                 nextMoveButton.setDisable(false);
                 playAnimationButton.setDisable(false);
                 
+                saveSolutionHandler.setPuzzleSolved(true);
+                
                 updateStats(
                     renderer.getTotalMoves(),
                     renderer.getNodesVisited(),
@@ -228,12 +264,16 @@ public class ControlPanel extends VBox {
             } else {
                 solveButton.setDisable(false);
                 
+                saveSolutionHandler.setPuzzleSolved(false);
+                
                 renderer.showErrorDialog("Solving Result", "No solution found for " + 
                                     algorithmFormal + 
                                     (heuristic != null ? " with " + heuristicFormal : ""));
             }
         } catch (Exception e) {
             solveButton.setDisable(false);
+            
+            saveSolutionHandler.setPuzzleSolved(false);
             
             renderer.showErrorDialog("Error", "An error occurred: " + e.getMessage());
             

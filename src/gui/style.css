@@ -503,3 +503,23 @@
     -fx-background-color: transparent;
     -fx-background: transparent;
 }
+
+/* Add these styles to your application CSS file */
+
+#saveSolutionButton {
+    -fx-background-color: #acd7d5; /* Green background */
+    -fx-text-fill: #725861;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 15px;
+    -fx-background-radius: 5px;
+}
+
+#saveSolutionButton:hover {
+    -fx-background-color: #A1CBC9; /* Darker green on hover */
+    -fx-cursor: hand;
+}
+
+#saveSolutionButton:disabled {
+    -fx-background-color: #cccccc;
+    -fx-text-fill: #666666;
+}
