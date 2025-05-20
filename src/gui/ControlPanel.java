@@ -181,6 +181,7 @@ public class ControlPanel extends VBox {
             solveButton.setDisable(false);
         }
     }
+
     private void solvePuzzle() {
         String algorithmFormal = algorithmChoiceBox.getValue();
         String heuristicFormal = heuristicChoiceBox.getValue();
@@ -198,6 +199,12 @@ public class ControlPanel extends VBox {
         System.out.println("Solving puzzle with algorithm: " + algorithm + 
                         ", heuristic: " + (heuristic != null ? heuristic : "N/A"));
         
+        // Disable tombol solve saat proses sedang berjalan
+        solveButton.setDisable(true);
+        
+        // Tampilkan indicator "Solving..." 
+        statsLabel.setText("Solving puzzle...");
+        
         // Panggil renderer dengan parameter yang benar
         boolean solved = renderer.solvePuzzle(algorithm, heuristic);
         
@@ -213,7 +220,22 @@ public class ControlPanel extends VBox {
             );
             
             createStateButtons();
+            
+            // TAMBAHAN: Langsung jalankan animasi secara otomatis
+            // Tanpa popup, langsung jalankan animasi dengan delay kecil
+            javafx.application.Platform.runLater(() -> {
+                // Tambahkan delay kecil hanya untuk memastikan UI telah diperbarui
+                new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(
+                        javafx.util.Duration.millis(300), // Delay sangat kecil
+                        event -> renderer.playAnimation()
+                    )
+                ).play();
+            });
         } else {
+            // Re-enable tombol solve
+            solveButton.setDisable(false);
+            
             // Tampilkan detail error dalam alert
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Solving Result");

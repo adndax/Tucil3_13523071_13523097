@@ -1,4 +1,4 @@
-package utils;
+package algorithm;
 
 import core.Board;
 import core.Piece;
