@@ -584,8 +584,7 @@ public class Renderer {
             // Gunakan warna tema #fbb2a2
             String primaryColor = "#fbb2a2"; // Warna utama sesuai permintaan
             String textColor = "#5a3e36";    // Warna teks yang kontras dengan primaryColor
-            String bgColor = "#fef8f6";      // Warna latar belakang (sedikit lebih terang)
-            String borderColor = "#946b5e";  // Warna border yang lebih gelap dari primaryColor
+            String bgColor = "#ffffff";      // Warna latar belakang (sedikit lebih terang)
             
             // Container utama
             javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(15);
