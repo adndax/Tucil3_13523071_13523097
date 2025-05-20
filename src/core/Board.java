@@ -109,7 +109,7 @@ public class Board {
                     // Jika 'K' ada di dalam grid
                     exitRow = i;
                     exitCol = j;
-                    grid[i][j] = '.'; // Kosongkan sel
+                    grid[i][j] = 'K'; // Kosongkan sel
                     System.out.println("Debug: Found exit at row " + exitRow + ", col " + exitCol + " (inside grid)");
                 } else {
                     grid[i][j] = c;
@@ -220,31 +220,26 @@ public class Board {
     }
 
     public boolean isSolved() {
-        if (primaryPiece.isHorizontal()) {
-            if (exitCol == cols) {
-                // Pintu keluar di kanan grid
-                // Pastikan primary piece berada tepat di samping exit point
-                return primaryPiece.getRow() == exitRow &&
-                        primaryPiece.getCol() + primaryPiece.getSize() == cols;
-            } else if (exitCol < cols) {
-                // Pintu keluar di dalam grid
-                // Pastikan primary piece berada tepat di atas exit point
-                return primaryPiece.getRow() == exitRow &&
-                        primaryPiece.getCol() + primaryPiece.getSize() == exitCol + 1;
-            }
-        } else {
-            if (exitRow == rows) {
-                // Pintu keluar di bawah grid
-                // Pastikan primary piece berada tepat di atas exit point
-                return primaryPiece.getCol() == exitCol &&
-                        primaryPiece.getRow() + primaryPiece.getSize() == rows;
-            } else if (exitRow < rows) {
-                // Pintu keluar di dalam grid
-                // Pastikan primary piece berada tepat di atas exit point
-                return primaryPiece.getCol() == exitCol &&
-                        primaryPiece.getRow() + primaryPiece.getSize() == exitRow + 1;
+        // Cek apakah salah satu sel P berada di atas K
+        for (int[] cell : primaryPiece.getOccupiedCells()) {
+            if (cell[0] == exitRow && cell[1] == exitCol) {
+                return true;
             }
         }
+
+        // Tambahan jika K di luar grid kanan atau bawah
+        int pRow = primaryPiece.getRow();
+        int pCol = primaryPiece.getCol();
+        int pSize = primaryPiece.getSize();
+
+        if (primaryPiece.isHorizontal() && exitCol == cols) {
+            return pRow == exitRow && pCol + pSize == cols;
+        }
+
+        if (!primaryPiece.isHorizontal() && exitRow == rows) {
+            return pCol == exitCol && pRow + pSize == rows;
+        }
+
         return false;
     }
 

@@ -3,7 +3,7 @@ package core;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import utils.Heuristics;
+import algorithm.Heuristics;
 
 public class GameState {
     private final Board board;

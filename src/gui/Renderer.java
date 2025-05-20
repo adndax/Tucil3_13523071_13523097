@@ -15,6 +15,8 @@ import java.util.Set;
 
 import algorithm.AStar;
 import algorithm.Dijkstra;
+import algorithm.GBFS;
+import algorithm.UCS;
 import core.Board;
 import core.GameState;
 import core.Move;
@@ -399,22 +401,37 @@ public class Renderer {
                 AStar astar = new AStar(heuristic != null ? heuristic : "manhattan");
                 solution = astar.solve(coreBoard);
                 nodesVisited = astar.getNodesVisited();
-                executionTime = (long) astar.getExecutionTimeMs();
-                
+                executionTime = (long) astar.getExecutionTime();
+
             } else if ("dijkstra".equals(algorithmLower)) {
                 System.out.println("Using Dijkstra algorithm");
                 Dijkstra dijkstra = new Dijkstra();
                 solution = dijkstra.solve(coreBoard);
                 nodesVisited = dijkstra.getNodesVisited();
-                executionTime = (long) dijkstra.getExecutionTimeMs();
-                
+                executionTime = (long) dijkstra.getExecutionTime();
+
+            } else if ("ucs".equals(algorithmLower)) {
+                System.out.println("Using UCS algorithm");
+                UCS ucs = new UCS(); // FIX: gunakan UCS, bukan Dijkstra
+                solution = ucs.solve(coreBoard);
+                nodesVisited = ucs.getNodesVisited();
+                executionTime = (long) ucs.getExecutionTime();
+
+            } else if ("gbfs".equals(algorithmLower) || "greedy".equals(algorithmLower)) {
+                System.out.println("Using GBFS algorithm with " + 
+                                (heuristic != null ? heuristic : "manhattan") + " heuristic");
+                GBFS gbfs = new GBFS(heuristic != null ? heuristic : "manhattan");
+                solution = gbfs.solve(coreBoard);
+                nodesVisited = gbfs.getNodesVisited();
+                executionTime = (long) gbfs.getExecutionTime();
+
             } else {
-                // Default fallback to A*
+                // Fallback
                 System.out.println("Unknown algorithm: " + algorithmLower + ". Using A* as fallback");
                 AStar astarFallback = new AStar("manhattan");
                 solution = astarFallback.solve(coreBoard);
                 nodesVisited = astarFallback.getNodesVisited();
-                executionTime = (long) astarFallback.getExecutionTimeMs();
+                executionTime = (long) astarFallback.getExecutionTime();
             }
             
             if (solution != null) {
