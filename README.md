@@ -10,17 +10,124 @@ This program is an implementation of a solver for the Rush Hour puzzle game usin
 - JavaFX SDK 17 or newer
 - Operating systems: Windows, macOS, or Linux
 
-## How to Compile and Run
-1. Make sure Java JDK 11 or newer is installed on your system.
-2. Download JavaFX SDK from the [official website](https://gluonhq.com/products/javafx/) and extract it to the `lib` folder in the project.
-3. Navigate to the program's root directory via terminal.
-4. To compile and run the program, simply use:
+# Rush Hour Puzzle Solver - Quick Start Guide
 
-```bash
-make
-```
+This guide provides step-by-step instructions to get the Rush Hour Puzzle Solver up and running on your system.
 
-This single command will compile all the necessary files and automatically launch the application with the correct JavaFX configuration for both Windows and macOS.
+## Windows Setup
+
+### Step 1: Install Java
+1. Download and install Java Development Kit (JDK) 11 or higher from [Oracle](https://www.oracle.com/java/technologies/downloads/) or [Adoptium](https://adoptium.net/)
+2. Verify installation by opening Command Prompt and typing:
+   ```
+   java -version
+   javac -version
+   ```
+
+### Step 2: Download JavaFX
+1. Download JavaFX SDK from [Gluon's website](https://gluonhq.com/products/javafx/)
+2. Extract the ZIP file to a location of your choice (e.g., `C:\Program Files\JavaFX\javafx-sdk-21.0.7`)
+
+### Step 3: Set Up Project
+1. Clone or extract the project to your computer
+2. Navigate to the project directory using Command Prompt
+
+### Step 4: Configure JavaFX Path
+You have two options:
+
+**Option A: Copy JavaFX libraries to project**
+1. Create a `lib` folder in the project root directory:
+   ```
+   mkdir lib
+   ```
+2. Copy all JAR files from the JavaFX SDK's `lib` folder to your project's `lib` folder
+3. Make sure the Makefile has `JAVAFX_LIB = lib`
+
+**Option B: Use JavaFX from installed location**
+1. Edit the Makefile:
+   - Find the line `JAVAFX_LIB = lib`
+   - Change it to your JavaFX installation path, for example:
+     ```
+     JAVAFX_LIB = C:/Program Files/JavaFX/javafx-sdk-21.0.7/lib
+     ```
+   - Make sure to use forward slashes (/) in the path
+
+### Step 5: Build and Run
+1. Check if JavaFX is correctly configured:
+   ```
+   make check-javafx
+   ```
+2. Compile the program:
+   ```
+   make compile
+   ```
+3. Run the program:
+   ```
+   make run
+   ```
+
+## macOS Setup
+
+### Step 1: Install Java
+1. Install using Homebrew:
+   ```
+   brew install openjdk@17
+   ```
+   Or download from [Oracle](https://www.oracle.com/java/technologies/downloads/)
+2. Verify installation:
+   ```
+   java -version
+   javac -version
+   ```
+
+### Step 2: Download JavaFX
+1. Install using Homebrew:
+   ```
+   brew install openjfx
+   ```
+   Or download from [Gluon's website](https://gluonhq.com/products/javafx/) and extract to a location of your choice.
+
+### Step 3: Set Up Project
+1. Clone or extract the project to your computer
+2. Open Terminal and navigate to the project directory
+
+### Step 4: Configure JavaFX Path
+You have two options:
+
+**Option A: Copy JavaFX libraries to project**
+1. Create a `lib` folder in the project root directory:
+   ```
+   mkdir lib
+   ```
+2. Copy all JAR files from the JavaFX SDK's `lib` folder to your project's `lib` folder:
+   ```
+   cp /path/to/javafx-sdk-21.0.7/lib/*.jar lib/
+   ```
+3. Make sure the Makefile has `JAVAFX_LIB = lib`
+
+**Option B: Use JavaFX from installed location**
+1. If you installed using Homebrew, it's typically at:
+   ```
+   JAVAFX_LIB = /usr/local/opt/openjfx/libexec/lib
+   ```
+   Or if you downloaded manually:
+   ```
+   JAVAFX_LIB = /Users/yourusername/javafx-sdk-21.0.7/lib
+   ```
+
+### Step 5: Build and Run
+1. Check if JavaFX is correctly configured:
+   ```
+   make check-javafx
+   ```
+2. Compile the program:
+   ```
+   make compile
+   ```
+3. Run the program:
+   ```
+   make run
+   ```
 
 ## How to Use
 1. Once the program is running, the GUI will appear.
