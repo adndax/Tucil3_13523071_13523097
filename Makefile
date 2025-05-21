@@ -1,6 +1,7 @@
 # Makefile untuk Rush Hour Puzzle GUI (macOS dan Windows)
 
-JAVAFX_LIB = lib
+# JAVAFX_LIB = lib
+JAVAFX_LIB = $(HOME)/javafx/javafx-sdk-21.0.7/lib # Ganti dengan path ke JavaFX SDK yang dimiliki
 JAVAFX_MODULES = javafx.controls,javafx.fxml,javafx.media
 JAVA_PACKAGE = src
 BIN_DIR = bin
